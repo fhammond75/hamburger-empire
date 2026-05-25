@@ -139,15 +139,21 @@
 
   <div class="panel">
     <h2>🧲 Emergency Magnet</h2>
-    <div id="magnet-info" style="font-size:0.72rem;color:#664422;margin-bottom:6px">2 uses max per game. Triggers 5 merge waves + 25s gravity pull.</div>
-    <div id="magnet-uses-row" style="font-size:0.85rem;color:#aaddff;margin-bottom:6px">Uses available: <strong id="magnet-uses">0</strong></div>
-    <button class="upg-btn" id="btn-magnet-buy" onclick="buyMagnet()">
-      <span id="magnet-buy-label">Buy Use #1</span>
-      <span class="cost" id="magnet-buy-cost">🪙 250</span>
+    <div id="magnet-pull-row" style="font-size:0.75rem;color:#aaddff;margin-bottom:4px">Pull: <span id="magnet-pull-val">0.45</span> / 1.50</div>
+    <button class="upg-btn" id="btn-magnet-upg" onclick="upgradeMagnetPull()" style="margin-bottom:6px">
+      <span id="magnet-upg-label">↑ Upgrade Pull +0.05</span>
+      <span class="cost" id="magnet-upg-cost">🪙 30</span>
     </button>
-    <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-top:4px">
-      <span>⚡ Activate</span><span class="cost" id="magnet-cd">0 ready</span>
-    </button>
+    <div style="border-top:1px solid #5c3010;padding-top:6px">
+      <div id="magnet-uses-row" style="font-size:0.8rem;color:#aaddff;margin-bottom:4px">Uses: <strong id="magnet-uses">0</strong> / 2</div>
+      <button class="upg-btn" id="btn-magnet-buy" onclick="buyMagnet()">
+        <span id="magnet-buy-label">Buy Use #1</span>
+        <span class="cost" id="magnet-buy-cost">🪙 250</span>
+      </button>
+      <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-top:4px">
+        <span>⚡ Activate</span><span class="cost" id="magnet-cd">No uses</span>
+      </button>
+    </div>
   </div>
 
   <div class="panel">
@@ -200,7 +206,7 @@ const ORDER_TOTAL_MS = STAR3_MS + STAR2_MS + STAR1_MS; // 60s total
 const AUTO_DROP_UNLOCK_COST = 50;
 const AUTO_DROP_BASE_MS     = 10000;
 const AUTO_DROP_STEP_MS     = 500;
-const AUTO_DROP_MIN_MS      = 3000;
+const AUTO_DROP_MIN_MS      = 250;
 function autoDropSpeedCost(n) { return Math.floor(20 * Math.pow(1.35, n)); }
 function autoDropInterval()   { return Math.max(AUTO_DROP_MIN_MS, AUTO_DROP_BASE_MS - autoDropSpeedLevel * AUTO_DROP_STEP_MS); }
 
@@ -212,6 +218,14 @@ function currentLuckyPct()   { return Math.min(LUCKY_CAP_PCT, luckyLevel * LUCKY
 const EXPAND_COSTS        = [30, 80, 200, 500];
 
 const MAGNET_COSTS = [250, 500];
+
+// Magnet pull upgrades: 0.45 base, +0.05 per level, max 1.5 (21 upgrades)
+// Levels 0-11 (0.45→1.00): cheap. Levels 12-21 (1.05→1.50): expensive.
+const MAGNET_PULL_BASE = 0.45;
+const MAGNET_PULL_STEP = 0.05;
+const MAGNET_PULL_MAX  = 1.50;
+function magnetPullValue()       { return Math.min(MAGNET_PULL_MAX, MAGNET_PULL_BASE + magnetPullLevel * MAGNET_PULL_STEP); }
+function magnetPullUpgradeCost(n){ return n < 11 ? Math.floor(30 * Math.pow(1.28, n)) : Math.floor(600 * Math.pow(1.45, n - 11)); }
 
 // ─── Recipe cards: unlock customer orders for assembled menu items ─────────────
 // Tiers 0-6 (Pickle→Patty) are raw ingredients, orderable once discovered.
@@ -239,6 +253,7 @@ let selectedItem = null;
 
 let magnetUsesLeft = 0;
 let magnetUsed     = 0;
+let magnetPullLevel = 0;
 let magnetActive   = false;
 let magnetEnd      = 0;
 
@@ -530,6 +545,13 @@ function discardSelected() {
 function mergeItems(a, b) {
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   const nextType = a.type + 1;
+
+  // Block merge if result requires a recipe not yet purchased
+  if (nextType < ITEMS.length && RECIPE_TIERS.includes(nextType) && !unlockedRecipes.has(nextType)) {
+    addPopup(mx, my - 24, `📋 Need ${ITEMS[nextType].name} Recipe!`, 'danger');
+    return;
+  }
+
   spawnParticles(mx, my, ITEMS[a.type].emoji, 7);
   removeItem(a); removeItem(b);
 
@@ -562,6 +584,15 @@ function buyMagnet() {
   if (coins < cost) return;
   coins -= cost;
   magnetUsesLeft++;
+  updateUI();
+}
+
+function upgradeMagnetPull() {
+  if (magnetPullValue() >= MAGNET_PULL_MAX) return;
+  const cost = magnetPullUpgradeCost(magnetPullLevel);
+  if (coins < cost) return;
+  coins -= cost;
+  magnetPullLevel++;
   updateUI();
 }
 
@@ -675,7 +706,7 @@ function triggerGameOver() {
 function restartGame() {
   score = 0; coins = 0; hearts = 3; ordersServed = 0;
   maxItems = 12; expandLevel = 0; highestMerge = 0;
-  magnetUsesLeft = 0; magnetUsed = 0; magnetActive = false; magnetEnd = 0;
+  magnetUsesLeft = 0; magnetUsed = 0; magnetPullLevel = 0; magnetActive = false; magnetEnd = 0;
   autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
   unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0;
   soldCounts.fill(0);
@@ -788,7 +819,16 @@ function updateUI() {
     ? 'Max staff reached'
     : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
 
-  // Magnet
+  // Magnet pull upgrade
+  const pullAtMax  = magnetPullValue() >= MAGNET_PULL_MAX;
+  const pullCost   = magnetPullUpgradeCost(magnetPullLevel);
+  const upgBtn     = document.getElementById('btn-magnet-upg');
+  upgBtn.disabled  = pullAtMax || coins < pullCost;
+  document.getElementById('magnet-pull-val').textContent  = magnetPullValue().toFixed(2);
+  document.getElementById('magnet-upg-label').textContent = pullAtMax ? '✔ Max Pull' : `↑ Upgrade Pull +0.05 (${magnetPullValue().toFixed(2)}→${Math.min(MAGNET_PULL_MAX, magnetPullValue()+MAGNET_PULL_STEP).toFixed(2)})`;
+  document.getElementById('magnet-upg-cost').textContent  = pullAtMax ? '' : `🪙 ${pullCost}`;
+
+  // Magnet uses
   const totalBought = magnetUsed + magnetUsesLeft;
   const nextCost    = totalBought < MAGNET_COSTS.length ? MAGNET_COSTS[totalBought] : null;
   const buyBtn      = document.getElementById('btn-magnet-buy');
@@ -892,7 +932,7 @@ function update() {
     }
   }
 
-  const pull = magnetActive ? 3.5 : 0.025;
+  const pull = magnetActive ? magnetPullValue() : 0.025;
   const rng  = magnetActive ? W : 200;
 
   for (const it of items) {
