@@ -118,6 +118,22 @@
     </div>
   </div>
 
+  <div class="panel" id="panel-recipes">
+    <h2>📋 Recipes</h2>
+    <div id="recipes-hint" style="font-size:0.72rem;color:#664422;margin-bottom:6px">Discover items by merging to unlock their recipe</div>
+    <div id="recipes-list"></div>
+  </div>
+
+  <div class="panel">
+    <h2>👨‍🍳 Staff</h2>
+    <div id="cook-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">No cooks hired</div>
+    <button class="upg-btn" id="btn-cook" onclick="hireCook()">
+      <span id="cook-label">Hire Line Cook</span>
+      <span class="cost" id="cook-cost">🪙 150</span>
+    </button>
+    <div style="font-size:0.68rem;color:#554433;margin-top:4px" id="cook-desc">Auto-merges 1 pair every 18s</div>
+  </div>
+
   <div class="panel">
     <h2>🧲 Magnet</h2>
     <div id="magnet-power-row">
@@ -209,6 +225,17 @@ const MAGNET_LEVELS = [
 const MAGNET_UPGRADE_COSTS = [60, 150, 350, 800];
 const MAGNET_CD_MS         = 30000;
 
+// ─── Recipe cards: unlock customer orders for assembled menu items ─────────────
+// Tiers 0-6 (Pickle→Patty) are raw ingredients, orderable once discovered.
+// Tiers 7-10 (Burger→Value Meal) require a recipe card purchase first.
+const RECIPE_TIERS = [7, 8, 9, 10];
+const RECIPE_COSTS = [200, 500, 1200, 3000];
+
+// ─── Line Cooks: auto-merge one matching pair every COOK_INTERVAL ms each ─────
+const COOK_COST     = 150;
+const MAX_COOKS     = 3;
+const COOK_INTERVAL = 18000; // each cook merges a pair every 18s
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let score        = 0;
 let best         = 0;
@@ -227,10 +254,14 @@ let magnetActive      = false;
 let magnetEnd         = 0;
 let magnetCooldownEnd = 0;
 
-let autoDropUnlocked  = false;
+let autoDropUnlocked   = false;
 let autoDropSpeedLevel = 0;
 let luckyLevel         = 0;
 let autoDropLastMs     = 0;
+
+const unlockedRecipes = new Set();
+let cooksHired    = 0;
+let cookLastMerge = 0;
 
 const soldCounts = new Array(ITEMS.length).fill(0);
 
@@ -280,7 +311,16 @@ function updateChainList() {
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 function maxOrderSlots() { return ordersServed >= 3 ? 2 : 1; }
-function maxOrderTier()  { return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4)); }
+function maxOrderTier() {
+  if (highestMerge === 0) return 0;
+  // Ingredients (0-6) are orderable once discovered
+  let max = Math.min(highestMerge, 6);
+  // Assembled menu items (7+) also need a recipe card purchased
+  for (const tier of RECIPE_TIERS) {
+    if (tier <= highestMerge && unlockedRecipes.has(tier)) max = tier;
+  }
+  return Math.min(max, ITEMS.length - 2);
+}
 
 function orderWindows(types) {
   // Combo gets extra time on the comfortable 3-star window only
@@ -577,6 +617,26 @@ function buyLucky() {
   updateUI();
 }
 
+function buyRecipe(tier) {
+  const idx = RECIPE_TIERS.indexOf(tier);
+  if (idx === -1 || unlockedRecipes.has(tier)) return;
+  if (tier > highestMerge) return; // must have discovered this tier first
+  const cost = RECIPE_COSTS[idx];
+  if (coins < cost) return;
+  coins -= cost;
+  unlockedRecipes.add(tier);
+  addPopup(W / 2, ARENA_TOP + 60, `📋 ${ITEMS[tier].name} Recipe!`, 'info');
+  updateUI();
+}
+
+function hireCook() {
+  if (cooksHired >= MAX_COOKS || coins < COOK_COST) return;
+  coins -= COOK_COST;
+  cooksHired++;
+  addPopup(W / 2, ARENA_TOP + 60, `👨‍🍳 Cook hired! (${cooksHired}/${MAX_COOKS})`, 'info');
+  updateUI();
+}
+
 function buyExpand() {
   if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
   coins -= EXPAND_COSTS[expandLevel];
@@ -607,6 +667,7 @@ function restartGame() {
   maxItems = 12; expandLevel = 0; highestMerge = 0;
   magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
   autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
+  unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0;
   soldCounts.fill(0);
   selectedItem = null; gameOver = false;
   items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
@@ -680,6 +741,41 @@ function updateUI() {
     luckyAtMax ? '🍀 Max Lucky!' : `🍀 +${LUCKY_STEP_PCT}% Lucky (Lv ${luckyLevel})`;
   document.getElementById('lucky-cost').textContent  = luckyAtMax ? '' : `🪙 ${luckyCost}`;
   document.getElementById('lucky-info').textContent  = `🍀 Lucky drop: ${currentLuckyPct()}%`;
+
+  // Recipes panel
+  const recipesList = document.getElementById('recipes-list');
+  recipesList.innerHTML = '';
+  let anyRecipeVisible = false;
+  for (let i = 0; i < RECIPE_TIERS.length; i++) {
+    const tier = RECIPE_TIERS[i];
+    const cost = RECIPE_COSTS[i];
+    if (tier > highestMerge) continue; // not discovered yet, hide
+    anyRecipeVisible = true;
+    const owned = unlockedRecipes.has(tier);
+    const btn = document.createElement('button');
+    btn.className = 'upg-btn';
+    btn.style.marginBottom = '4px';
+    btn.disabled = owned || coins < cost;
+    btn.onclick = () => buyRecipe(tier);
+    btn.innerHTML = owned
+      ? `<span>✔ ${ITEMS[tier].emoji} ${ITEMS[tier].name}</span><span class="cost" style="color:#44aa44">Unlocked</span>`
+      : `<span>${ITEMS[tier].emoji} ${ITEMS[tier].name} Recipe</span><span class="cost">🪙 ${cost}</span>`;
+    recipesList.appendChild(btn);
+  }
+  document.getElementById('recipes-hint').style.display = anyRecipeVisible ? 'none' : '';
+
+  // Staff panel
+  const maxCooksReached = cooksHired >= MAX_COOKS;
+  const cookBtn = document.getElementById('btn-cook');
+  cookBtn.disabled = maxCooksReached || coins < COOK_COST;
+  document.getElementById('cook-label').textContent = maxCooksReached ? 'Kitchen Full' : `Hire Line Cook (${cooksHired}/${MAX_COOKS})`;
+  document.getElementById('cook-cost').textContent  = maxCooksReached ? '' : `🪙 ${COOK_COST}`;
+  document.getElementById('cook-info').textContent  = cooksHired === 0
+    ? 'No cooks hired'
+    : `${cooksHired} cook${cooksHired > 1 ? 's' : ''} · merges every ${Math.floor(COOK_INTERVAL / cooksHired / 1000)}s`;
+  document.getElementById('cook-desc').textContent = maxCooksReached
+    ? 'Max staff reached'
+    : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
 
   // Magnet
   const lvl  = MAGNET_LEVELS[magnetLevel];
@@ -772,6 +868,31 @@ function update() {
       if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`, 'lucky');
       updateUI();
       checkBoardForOrders();
+    }
+  }
+
+  // Line cooks: each cook contributes to a shared interval, auto-merging one pair
+  if (cooksHired > 0) {
+    const interval = Math.floor(COOK_INTERVAL / cooksHired);
+    if (Date.now() - cookLastMerge >= interval) {
+      cookLastMerge = Date.now();
+      // Find the highest-value matching pair to merge
+      let best = null;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].scale < 0.85) continue;
+        for (let j = i + 1; j < items.length; j++) {
+          if (items[j].scale < 0.85) continue;
+          if (items[i].type === items[j].type) {
+            if (!best || items[i].type > best[0].type) best = [items[i], items[j]];
+            break;
+          }
+        }
+      }
+      if (best) {
+        const mx = (best[0].x + best[1].x) / 2, my = (best[0].y + best[1].y) / 2;
+        addPopup(mx, my - 20, '👨‍🍳', 'info');
+        mergeItems(best[0], best[1]);
+      }
     }
   }
 
