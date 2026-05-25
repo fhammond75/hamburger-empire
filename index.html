@@ -18,7 +18,7 @@
               display: block; box-shadow: 0 0 28px #ff440033; cursor: crosshair; }
     #hint { color: #664422; font-size: 0.78rem; }
 
-    #sidebar { width: 210px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
+    #sidebar { width: 215px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
     .panel { background: #1e0c00; border: 1px solid #8b4400; border-radius: 8px; padding: 11px; }
     .panel h2 { font-size: 0.75rem; color: #ffcc44; text-transform: uppercase;
                 letter-spacing: 1px; margin-bottom: 8px; }
@@ -45,8 +45,6 @@
     .upg-btn:disabled { opacity: 0.3; cursor: default; }
     .upg-btn .cost { color: #ccaa00; font-size: 0.7rem; }
 
-    /* Magnet panel */
-    #magnet-panel {}
     #magnet-power-row { display: flex; align-items: center; justify-content: space-between;
                         margin-bottom: 6px; font-size: 0.78rem; color: #aaddff; }
     #magnet-pips { display: flex; gap: 3px; }
@@ -54,22 +52,22 @@
     .pip.on { background: #44aaff; border-color: #88ccff; }
     #magnet-cd { font-size: 0.7rem; color: #446688; margin-bottom: 5px; min-height: 14px; }
 
-    /* Chain */
-    #chain-list { display: flex; flex-direction: column; gap: 3px; }
-    .chain-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
-    .chain-emoji { font-size: 1.05rem; width: 22px; text-align: center; }
-    .chain-name { flex: 1; }
-    .chain-row.locked { opacity: 0.3; filter: grayscale(1); }
-    .chain-row.locked .chain-name { color: #553311; }
-    .chain-arrow { font-size: 0.55rem; color: #443311; margin-left: 4px; }
+    #chain-list { display: flex; flex-direction: column; gap: 2px; }
+    .chain-row { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; padding: 2px 0; }
+    .chain-emoji { font-size: 1rem; width: 20px; text-align: center; }
+    .chain-name  { flex: 1; }
+    .chain-sold  { font-size: 0.68rem; color: #886633; min-width: 28px; text-align: right; }
+    .chain-row.locked { opacity: 0.28; filter: grayscale(1); }
+    .chain-row.locked .chain-name { color: #442200; }
+    .chain-arrow { font-size: 0.5rem; color: #332200; padding-left: 4px; }
   </style>
 </head>
 <body>
 
 <div id="game-wrap">
   <h1>🍔 Hamburger Empire</h1>
-  <canvas id="canvas" width="540" height="660"></canvas>
-  <div id="hint">Click arena → drop pickle &nbsp;·&nbsp; Click wanted item (▲) → serve &nbsp;·&nbsp; Click other item → select, then 🗑 to trash</div>
+  <canvas id="canvas" width="560" height="680"></canvas>
+  <div id="hint">Click arena → drop ingredient &nbsp;·&nbsp; Items auto-serve matched orders &nbsp;·&nbsp; Click non-order item → select, then 🗑</div>
 </div>
 
 <div id="sidebar">
@@ -104,12 +102,13 @@
     <h2>🥒 Auto Dropper</h2>
     <div id="autodrop-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">Off</div>
     <button class="upg-btn" id="btn-autodrop" onclick="buyAutoDrop()">
-      <span id="autodrop-label">Buy Auto Drop</span><span class="cost" id="autodrop-cost">🪙 40</span>
+      <span id="autodrop-label">Buy Auto Drop</span>
+      <span class="cost" id="autodrop-cost">🪙 40</span>
     </button>
     <div id="lucky-pct" style="font-size:0.72rem;color:#448844;margin-top:6px">🍀 Lucky drop: 0%</div>
   </div>
 
-  <div class="panel" id="magnet-panel">
+  <div class="panel">
     <h2>🧲 Magnet</h2>
     <div id="magnet-power-row">
       <span>Power <span id="magnet-lvl">1</span></span>
@@ -138,41 +137,43 @@
 </div>
 
 <script>
-// ─── Canvas / constants ───────────────────────────────────────────────────────
+// ─── Canvas ───────────────────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
-const W = canvas.width;   // 540
-const H = canvas.height;  // 660
+const W = canvas.width;   // 560
+const H = canvas.height;  // 680
 
-const ORDER_H    = 110;
-const ARENA_TOP  = ORDER_H;
-const TRASH_SIZE = 68;
-const TRASH_X    = W - TRASH_SIZE - 8;
-const TRASH_Y    = H - TRASH_SIZE - 8;
+const ORDER_H   = 130;   // taller strip for combo orders
+const ARENA_TOP = ORDER_H;
+const TRASH_SZ  = 68;
+const TRASH_X   = W - TRASH_SZ - 8;
+const TRASH_Y   = H - TRASH_SZ - 8;
 
+// ─── Items ────────────────────────────────────────────────────────────────────
 const ITEMS = [
-  { emoji: '🥒', name: 'Pickle',     radius: 20, value:   5 },
-  { emoji: '🍅', name: 'Tomato',     radius: 26, value:  12 },
-  { emoji: '🥬', name: 'Lettuce',    radius: 32, value:  25 },
-  { emoji: '🧅', name: 'Onion',      radius: 38, value:  50 },
-  { emoji: '🧀', name: 'Cheese',     radius: 44, value:  90 },
-  { emoji: '🥩', name: 'Patty',      radius: 50, value: 160 },
-  { emoji: '🍔', name: 'Burger',     radius: 58, value: 280 },
-  { emoji: '🍟', name: 'Fries',      radius: 66, value: 480 },
-  { emoji: '🥤', name: 'Shake',      radius: 74, value: 800 },
-  { emoji: '🎉', name: 'Value Meal', radius: 84, value:1400 },
+  { emoji: '🥒', name: 'Pickle',     radius: 20, value:    5 },
+  { emoji: '🍅', name: 'Tomato',     radius: 25, value:   12 },
+  { emoji: '🥬', name: 'Lettuce',    radius: 30, value:   25 },
+  { emoji: '🧅', name: 'Onion',      radius: 35, value:   50 },
+  { emoji: '🥓', name: 'Bacon',      radius: 40, value:   80 },
+  { emoji: '🧀', name: 'Cheese',     radius: 45, value:  110 },
+  { emoji: '🥩', name: 'Patty',      radius: 50, value:  180 },
+  { emoji: '🍔', name: 'Burger',     radius: 57, value:  300 },
+  { emoji: '🍟', name: 'Fries',      radius: 63, value:  500 },
+  { emoji: '🥤', name: 'Shake',      radius: 69, value:  850 },
+  { emoji: '🎉', name: 'Value Meal', radius: 78, value: 1500 },
 ];
+
 const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕','👲'];
 
-// Freshness thresholds
 const FRESH_MS = 30000;
-const WARM_MS  = 60000;
+const WARM_MS  = 65000;
 
-// Auto-dropper upgrade levels: interval in ms
+// ─── Upgrade tables ───────────────────────────────────────────────────────────
 const AUTO_DROP_INTERVALS = [6000, 4000, 2000];
 const AUTO_DROP_COSTS     = [40, 100, 250];
+const EXPAND_COSTS        = [30, 80, 200, 500];
 
-// Magnet upgrade: [waves, attraction-strength, cost]
 const MAGNET_LEVELS = [
   { waves: 1, pull: 0.08, label: '1 wave + 30s' },
   { waves: 2, pull: 0.14, label: '2 waves + 30s' },
@@ -181,9 +182,9 @@ const MAGNET_LEVELS = [
   { waves: 5, pull: 0.45, label: '5 waves + 30s' },
 ];
 const MAGNET_UPGRADE_COSTS = [60, 150, 350, 800];
-const MAGNET_COOLDOWN_MS   = 30000;
+const MAGNET_CD_MS         = 30000;
 
-// ─── Game state ───────────────────────────────────────────────────────────────
+// ─── State ────────────────────────────────────────────────────────────────────
 let score        = 0;
 let best         = 0;
 let coins        = 0;
@@ -192,7 +193,7 @@ let maxHearts    = 3;
 let ordersServed = 0;
 let maxItems     = 12;
 let expandLevel  = 0;
-let highestMerge = 0;   // highest tier ever merged TO
+let highestMerge = 0;
 let gameOver     = false;
 let selectedItem = null;
 
@@ -201,16 +202,16 @@ let magnetActive      = false;
 let magnetEnd         = 0;
 let magnetCooldownEnd = 0;
 
-let autoDropLevel   = 0;   // 0 = off, 1-3 = active tiers
-let autoDropLastMs  = 0;   // timestamp of last auto-drop
+let autoDropLevel  = 0;
+let autoDropLastMs = 0;
 
-const EXPAND_COSTS = [30, 80, 200, 500];
+const soldCounts = new Array(ITEMS.length).fill(0);
 
 const items     = [];
 const orders    = [];
 const particles = [];
 const popups    = [];
-let nextId   = 0;
+let nextId    = 0;
 let orderSeed = 0;
 
 // ─── Chain sidebar ────────────────────────────────────────────────────────────
@@ -218,64 +219,90 @@ function buildChainList() {
   const list = document.getElementById('chain-list');
   list.innerHTML = '';
   ITEMS.forEach((it, i) => {
+    const locked = i > highestMerge + 1;
     const row = document.createElement('div');
-    row.className = 'chain-row' + (i > highestMerge + 1 ? ' locked' : '');
-    row.id = `chain-row-${i}`;
-    const emoji = document.createElement('span');
-    emoji.className = 'chain-emoji';
-    emoji.textContent = i > highestMerge + 1 ? '❓' : it.emoji;
-    const name = document.createElement('span');
-    name.className = 'chain-name';
-    name.textContent = i > highestMerge + 1 ? '???' : it.name;
-    row.appendChild(emoji);
-    row.appendChild(name);
-    if (i < ITEMS.length - 1) {
-      const arrow = document.createElement('span');
-      arrow.className = 'chain-arrow';
-      arrow.textContent = '▼';
-      row.appendChild(arrow);
-    }
+    row.className = 'chain-row' + (locked ? ' locked' : '');
+    row.id = `cr-${i}`;
+    row.innerHTML = `
+      <span class="chain-emoji">${locked ? '❓' : it.emoji}</span>
+      <span class="chain-name">${locked ? '???' : it.name}</span>
+      <span class="chain-sold" id="cs-${i}">${soldCounts[i] > 0 ? '×'+soldCounts[i] : ''}</span>
+    `;
     list.appendChild(row);
+    if (i < ITEMS.length - 1) {
+      const arr = document.createElement('div');
+      arr.className = 'chain-arrow';
+      arr.textContent = '▼';
+      list.appendChild(arr);
+    }
   });
 }
 
 function updateChainList() {
   ITEMS.forEach((it, i) => {
-    const row = document.getElementById(`chain-row-${i}`);
+    const row   = document.getElementById(`cr-${i}`);
+    const sold  = document.getElementById(`cs-${i}`);
     if (!row) return;
     const locked = i > highestMerge + 1;
     row.className = 'chain-row' + (locked ? ' locked' : '');
     row.querySelector('.chain-emoji').textContent = locked ? '❓' : it.emoji;
     row.querySelector('.chain-name').textContent  = locked ? '???' : it.name;
+    if (sold) sold.textContent = soldCounts[i] > 0 ? `×${soldCounts[i]}` : '';
   });
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 function maxOrderSlots() { return ordersServed >= 3 ? 2 : 1; }
+function maxOrderTier()  { return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4)); }
 
-function maxOrderTier() {
-  return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4));
-}
-
-function orderDuration(type) {
-  // Generous: 90s for tomato, 50s for shake, shrinks slowly with difficulty
-  const base = Math.max(45000, (90 - type * 5) * 1000);
+function orderDuration(types) {
+  const base = types.reduce((sum, t) => sum + Math.max(45000, (90 - t * 4) * 1000), 0);
   return base / (1 + Math.floor(ordersServed / 5) * 0.06);
 }
 
+// Predefined combo templates (types to ask for together)
+const COMBOS = [
+  [7, 8],         // Burger + Fries
+  [7, 9],         // Burger + Shake
+  [8, 9],         // Fries + Shake
+  [7, 8, 9],      // Burger + Fries + Shake (full meal)
+  [7, 4],         // Burger + Bacon
+  [7, 5],         // Burger + Cheese
+  [7, 1, 3],      // Burger + Tomato + Onion
+  [6, 4, 5],      // Patty + Bacon + Cheese
+];
+
 function spawnOrder() {
   if (orders.length >= maxOrderSlots() || gameOver) return;
-  const max  = maxOrderTier();
-  const type = 1 + Math.floor(Math.random() * max);
-  const dur  = orderDuration(type);
+
+  let wantTypes;
+  const canCombo = ordersServed >= 8 && Math.random() < 0.3 + Math.floor(ordersServed / 10) * 0.05;
+
+  if (canCombo) {
+    // Pick a combo where all types are within discovered range
+    const validCombos = COMBOS.filter(c => c.every(t => t <= maxOrderTier()));
+    if (validCombos.length > 0) {
+      wantTypes = validCombos[Math.floor(Math.random() * validCombos.length)];
+    } else {
+      wantTypes = [1 + Math.floor(Math.random() * maxOrderTier())];
+    }
+  } else {
+    wantTypes = [1 + Math.floor(Math.random() * maxOrderTier())];
+  }
+
+  const dur = orderDuration(wantTypes);
   orders.push({
-    id: orderSeed++,
-    type,
+    id:        orderSeed++,
+    wants:     wantTypes.map(t => ({ type: t, served: false })),
+    isCombo:   wantTypes.length > 1,
     createdAt: Date.now(),
     deadline:  Date.now() + dur,
     duration:  dur,
     customer:  CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)],
   });
+
+  // Immediately check if any board item satisfies a want
+  checkBoardForOrders();
 }
 
 function tickOrders() {
@@ -291,26 +318,69 @@ function tickOrders() {
 
 function freshness(order) {
   const age = Date.now() - order.createdAt;
-  if (age < FRESH_MS) return { stars: 3, label: 'Fresh!',      mult: 3, color: '#44dd66' };
+  if (age < FRESH_MS) return { stars: 3, label: 'Fresh!',       mult: 3, color: '#44dd66' };
   if (age < WARM_MS)  return { stars: 2, label: 'Getting cold', mult: 2, color: '#ffaa22' };
   return                     { stars: 1, label: 'Cold…',        mult: 1, color: '#cc4422' };
 }
 
-function tryAutoServe(itemType) {
-  const idx = orders.findIndex(o => o.type === itemType);
-  if (idx === -1) return false;
-  const order  = orders[idx];
-  const f      = freshness(order);
-  const earned = ITEMS[itemType].value * f.mult;
+// Try to serve an item of `itemType` against active orders.
+// Returns true if served, false if nothing matched.
+function tryServeType(itemType) {
+  for (const order of orders) {
+    const want = order.wants.find(w => !w.served && w.type === itemType);
+    if (!want) continue;
+    want.served = true;
+    soldCounts[itemType]++;
+    updateChainList();
+
+    if (order.wants.every(w => w.served)) {
+      completeOrder(order);
+    }
+    return true;
+  }
+  return false;
+}
+
+function completeOrder(order) {
+  const idx = orders.indexOf(order);
+  if (idx === -1) return;
   orders.splice(idx, 1);
+
+  const f      = freshness(order);
+  const base   = order.wants.reduce((sum, w) => sum + ITEMS[w.type].value, 0);
+  const earned = Math.floor(base * f.mult * (order.isCombo ? 1.5 : 1));
+  const coinEarned = Math.max(1, Math.floor(earned / 6));
+
   score  += earned;
-  coins  += Math.max(1, Math.floor(earned / 6));
+  coins  += coinEarned;
   best    = Math.max(best, score);
   ordersServed++;
-  addPopup(W / 2, ARENA_TOP + 40, `${f.stars === 3 ? '🌟' : f.stars === 2 ? '⭐' : '☆'} +${earned}`);
+
+  const stars = f.stars === 3 ? '🌟' : f.stars === 2 ? '⭐' : '☆';
+  const bonus = order.isCombo ? ' COMBO!' : '';
+  addPopup(W / 2, ARENA_TOP + 50, `${stars} +${earned}${bonus}`);
+
   setTimeout(spawnOrder, 1400);
   updateUI();
-  return true;
+}
+
+// Scan board items and auto-serve any that match an active order want.
+// Runs whenever a new item lands or a new order appears.
+function checkBoardForOrders() {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      if (it.scale < 0.85) continue;
+      if (tryServeType(it.type)) {
+        spawnParticles(it.x, it.y, ITEMS[it.type].emoji, 7);
+        removeItem(it);
+        changed = true;
+        break; // restart outer loop; orders array may have changed
+      }
+    }
+  }
 }
 
 function loseHeart() {
@@ -321,15 +391,14 @@ function loseHeart() {
   if (hearts <= 0) triggerGameOver();
 }
 
-// ─── Items ────────────────────────────────────────────────────────────────────
+// ─── Board items ──────────────────────────────────────────────────────────────
 function createItem(type, x, y, vx, vy) {
   return {
     id: nextId++, type, x, y,
     vx: vx ?? (Math.random() - 0.5) * 0.8,
     vy: vy ?? (Math.random() - 0.5) * 0.8,
     radius: ITEMS[type].radius,
-    scale: 0.05,
-    glowTimer: 0,
+    scale: 0.05, glowTimer: 0,
   };
 }
 
@@ -347,21 +416,15 @@ function getItemAt(x, y) {
   return null;
 }
 
-// Returns a tier index weighted toward lower tiers from the discovered pool.
-// Chance of a lucky ingredient = highestMerge * 10%, capped at 70%.
 function getLuckyDropType() {
   if (highestMerge === 0) return 0;
-  const luckyChance = Math.min(0.70, highestMerge * 0.10);
-  if (Math.random() > luckyChance) return 0; // plain pickle
-  // Pick from tiers 1..highestMerge with weight 1/tier (lower = more likely)
+  const chance = Math.min(0.70, highestMerge * 0.10);
+  if (Math.random() > chance) return 0;
   const weights = [];
   for (let t = 1; t <= highestMerge; t++) weights.push(1 / t);
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
-  for (let t = 1; t <= highestMerge; t++) {
-    r -= weights[t - 1];
-    if (r <= 0) return t;
-  }
+  for (let t = 1; t <= highestMerge; t++) { r -= weights[t - 1]; if (r <= 0) return t; }
   return highestMerge;
 }
 
@@ -376,10 +439,9 @@ function spawnItem(x, y, forceType) {
   items.push(item);
   if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
   updateUI();
+  // Check if new item satisfies any order once it finishes scaling in
+  // (handled via periodic checkBoardForOrders in update loop)
 }
-
-// Keep old name as alias for click handler
-function spawnPickle(x, y) { spawnItem(x, y); }
 
 function discardSelected() {
   if (!selectedItem) return;
@@ -398,7 +460,7 @@ function mergeItems(a, b) {
   if (nextType >= ITEMS.length) {
     addPopup(mx, my, '🏆 MAX!');
     updateUI();
-    return null;
+    return;
   }
 
   if (nextType > highestMerge) {
@@ -408,15 +470,12 @@ function mergeItems(a, b) {
 
   const newItem = createItem(nextType, mx, my, 0, 0);
   newItem.glowTimer = 50;
+  newItem.scale = 0.9; // skip slow scale-in so it can immediately be served
   items.push(newItem);
 
-  if (tryAutoServe(nextType)) {
-    spawnParticles(mx, my, ITEMS[nextType].emoji, 10);
-    removeItem(newItem);
-    return null;
-  }
+  // Check if new item (or any existing item) satisfies an order
+  checkBoardForOrders();
   updateUI();
-  return newItem;
 }
 
 // ─── Magnet ───────────────────────────────────────────────────────────────────
@@ -424,19 +483,16 @@ function activateMagnet() {
   if (magnetCooldownEnd > Date.now() || gameOver) return;
   const lvl = MAGNET_LEVELS[magnetLevel];
 
-  // Run N waves of instant merges
   for (let wave = 0; wave < lvl.waves; wave++) {
     const usedIds = new Set();
-    // Group items by type
-    const byType = {};
+    const byType  = {};
     for (const it of items) {
       if (!byType[it.type]) byType[it.type] = [];
       byType[it.type].push(it);
     }
     let anyMerged = false;
     for (const [typeStr, group] of Object.entries(byType)) {
-      const type = parseInt(typeStr);
-      if (type >= ITEMS.length - 1) continue;
+      if (parseInt(typeStr) >= ITEMS.length - 1) continue;
       for (let i = 0; i + 1 < group.length; i += 2) {
         const a = group[i], b = group[i + 1];
         if (usedIds.has(a.id) || usedIds.has(b.id)) continue;
@@ -449,23 +505,20 @@ function activateMagnet() {
     if (!anyMerged) break;
   }
 
-  // Start 30s attraction buff
-  magnetActive    = true;
-  magnetEnd       = Date.now() + 30000;
-  magnetCooldownEnd = Date.now() + MAGNET_COOLDOWN_MS;
+  magnetActive      = true;
+  magnetEnd         = Date.now() + 30000;
+  magnetCooldownEnd = Date.now() + MAGNET_CD_MS;
   updateUI();
 }
 
 function upgradeMagnet() {
-  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) return;
-  const cost = MAGNET_UPGRADE_COSTS[magnetLevel];
-  if (coins < cost) return;
-  coins -= cost;
+  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length || coins < MAGNET_UPGRADE_COSTS[magnetLevel]) return;
+  coins -= MAGNET_UPGRADE_COSTS[magnetLevel];
   magnetLevel++;
   updateUI();
 }
 
-// ─── Auto Dropper ─────────────────────────────────────────────────────────────
+// ─── Upgrades ─────────────────────────────────────────────────────────────────
 function buyAutoDrop() {
   if (autoDropLevel >= AUTO_DROP_COSTS.length || coins < AUTO_DROP_COSTS[autoDropLevel]) return;
   coins -= AUTO_DROP_COSTS[autoDropLevel];
@@ -474,7 +527,6 @@ function buyAutoDrop() {
   updateUI();
 }
 
-// ─── Other upgrades ───────────────────────────────────────────────────────────
 function buyExpand() {
   if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
   coins -= EXPAND_COSTS[expandLevel];
@@ -486,7 +538,7 @@ function buyExpand() {
 function buyClear() {
   if (coins < 50) return;
   coins -= 50;
-  const wanted   = new Set(orders.map(o => o.type));
+  const wanted   = new Set(orders.flatMap(o => o.wants.filter(w => !w.served).map(w => w.type)));
   const toRemove = items.filter(it => !wanted.has(it.type));
   toRemove.forEach(it => { spawnParticles(it.x, it.y, '💨', 4); removeItem(it); });
   addPopup(W / 2, H / 2, `Cleared ${toRemove.length} items!`);
@@ -505,6 +557,7 @@ function restartGame() {
   maxItems = 12; expandLevel = 0; highestMerge = 0;
   magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
   autoDropLevel = 0; autoDropLastMs = 0;
+  soldCounts.fill(0);
   selectedItem = null; gameOver = false;
   items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
   buildChainList();
@@ -522,11 +575,9 @@ function spawnParticles(x, y, emoji, count = 7) {
   }
 }
 
-function addPopup(x, y, text) {
-  popups.push({ x, y, text, life: 1, vy: -1.2 });
-}
+function addPopup(x, y, text) { popups.push({ x, y, text, life: 1, vy: -1.2 }); }
 
-// ─── UI update ────────────────────────────────────────────────────────────────
+// ─── UI ───────────────────────────────────────────────────────────────────────
 function updateUI() {
   document.getElementById('hearts-row').textContent =
     '❤️'.repeat(hearts) + '🖤'.repeat(Math.max(0, maxHearts - hearts));
@@ -543,80 +594,56 @@ function updateUI() {
   document.getElementById('cap-bar').style.background =
     pct >= 0.9 ? '#ff3300' : pct >= 0.7 ? '#ff8800' : '#44cc66';
 
-  // Kitchen expand
-  const expandBtn  = document.getElementById('btn-expand');
-  const expandCost = document.getElementById('expand-cost');
-  if (expandLevel >= EXPAND_COSTS.length) {
-    expandBtn.disabled = true; expandCost.textContent = 'Max!';
+  const eb = document.getElementById('btn-expand'), ec = document.getElementById('expand-cost');
+  if (expandLevel >= EXPAND_COSTS.length) { eb.disabled = true; ec.textContent = 'Max!'; }
+  else { eb.disabled = coins < EXPAND_COSTS[expandLevel]; ec.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`; }
+
+  // Auto drop
+  const adb = document.getElementById('btn-autodrop'), adc = document.getElementById('autodrop-cost');
+  const adl = document.getElementById('autodrop-label'), adi = document.getElementById('autodrop-info');
+  if (autoDropLevel >= AUTO_DROP_COSTS.length) {
+    adb.disabled = true; adc.textContent = 'Max!'; adl.textContent = 'Auto Drop';
   } else {
-    expandBtn.disabled     = coins < EXPAND_COSTS[expandLevel];
-    expandCost.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`;
+    adb.disabled = coins < AUTO_DROP_COSTS[autoDropLevel];
+    adc.textContent = `🪙 ${AUTO_DROP_COSTS[autoDropLevel]}`;
+    adl.textContent = autoDropLevel === 0 ? 'Buy Auto Drop' : `Upgrade (Lv ${autoDropLevel}→${autoDropLevel+1})`;
   }
+  adi.textContent = autoDropLevel > 0
+    ? `Every ${AUTO_DROP_INTERVALS[autoDropLevel-1]/1000}s · Lv ${autoDropLevel}/3`
+    : 'Off';
+  document.getElementById('lucky-pct').textContent =
+    `🍀 Lucky drop: ${Math.min(70, highestMerge * 10)}%`;
 
   // Magnet
-  const lvl     = MAGNET_LEVELS[magnetLevel];
-  const onCd    = magnetCooldownEnd > Date.now();
-  document.getElementById('magnet-lvl').textContent         = magnetLevel + 1;
+  const lvl  = MAGNET_LEVELS[magnetLevel];
+  const onCd = magnetCooldownEnd > Date.now();
+  document.getElementById('magnet-lvl').textContent          = magnetLevel + 1;
   document.getElementById('magnet-effect-label').textContent = lvl.label;
-  document.getElementById('btn-magnet').disabled            = onCd || gameOver;
-
-  // Pips
+  document.getElementById('btn-magnet').disabled             = onCd || gameOver;
   const pipsEl = document.getElementById('magnet-pips');
   pipsEl.innerHTML = '';
   for (let i = 0; i < 5; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'pip' + (i <= magnetLevel ? ' on' : '');
-    pipsEl.appendChild(pip);
+    const p = document.createElement('div');
+    p.className = 'pip' + (i <= magnetLevel ? ' on' : '');
+    pipsEl.appendChild(p);
   }
-
-  // Upgrade
-  const upgBtn  = document.getElementById('btn-magnet-upg');
-  const upgCost = document.getElementById('magnet-upg-cost');
-  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) {
-    upgBtn.disabled = true; upgCost.textContent = 'Max!';
-  } else {
-    upgBtn.disabled     = coins < MAGNET_UPGRADE_COSTS[magnetLevel];
-    upgCost.textContent = `🪙 ${MAGNET_UPGRADE_COSTS[magnetLevel]}`;
-  }
+  const ub = document.getElementById('btn-magnet-upg'), uc = document.getElementById('magnet-upg-cost');
+  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) { ub.disabled = true; uc.textContent = 'Max!'; }
+  else { ub.disabled = coins < MAGNET_UPGRADE_COSTS[magnetLevel]; uc.textContent = `🪙 ${MAGNET_UPGRADE_COSTS[magnetLevel]}`; }
 
   document.getElementById('btn-clear').disabled = coins < 50;
-
-  // Auto Dropper
-  const adBtn  = document.getElementById('btn-autodrop');
-  const adCost = document.getElementById('autodrop-cost');
-  const adInfo = document.getElementById('autodrop-info');
-  if (autoDropLevel >= AUTO_DROP_COSTS.length) {
-    adBtn.disabled = true; adCost.textContent = 'Max!';
-    document.getElementById('autodrop-label').textContent = 'Auto Drop';
-  } else {
-    adBtn.disabled     = coins < AUTO_DROP_COSTS[autoDropLevel];
-    adCost.textContent = `🪙 ${AUTO_DROP_COSTS[autoDropLevel]}`;
-    document.getElementById('autodrop-label').textContent =
-      autoDropLevel === 0 ? 'Buy Auto Drop' : `Upgrade (Lv ${autoDropLevel}→${autoDropLevel+1})`;
-  }
-  if (autoDropLevel > 0) {
-    const interval = AUTO_DROP_INTERVALS[autoDropLevel - 1] / 1000;
-    adInfo.textContent = `Every ${interval}s · Lv ${autoDropLevel}/3`;
-  } else {
-    adInfo.textContent = 'Off';
-  }
-  const luckyPct = Math.min(70, highestMerge * 10);
-  document.getElementById('lucky-pct').textContent = `🍀 Lucky drop: ${luckyPct}%`;
 }
 
-function updateMagnetCooldownLabel() {
-  const cdEl = document.getElementById('magnet-cd');
+function updateMagnetLabel() {
+  const el = document.getElementById('magnet-cd');
   if (magnetActive) {
-    const rem = Math.ceil((magnetEnd - Date.now()) / 1000);
-    cdEl.textContent = `🧲 Active: ${rem}s`;
-    cdEl.style.color = '#44aaff';
+    el.textContent = `🧲 Active: ${Math.ceil((magnetEnd - Date.now())/1000)}s`;
+    el.style.color = '#44aaff';
   } else if (magnetCooldownEnd > Date.now()) {
-    const rem = Math.ceil((magnetCooldownEnd - Date.now()) / 1000);
-    cdEl.textContent = `Cooldown: ${rem}s`;
-    cdEl.style.color = '#446688';
+    el.textContent = `Cooldown: ${Math.ceil((magnetCooldownEnd - Date.now())/1000)}s`;
+    el.style.color = '#446688';
   } else {
-    cdEl.textContent = 'Ready!';
-    cdEl.style.color = '#44cc88';
+    el.textContent = 'Ready!'; el.style.color = '#44cc88';
   }
 }
 
@@ -626,22 +653,20 @@ canvas.addEventListener('click', e => {
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
 
   if (gameOver) {
-    // Restart button check
-    const bx = W / 2 - 75, by = H / 2 + 50;
-    if (mx >= bx && mx <= bx + 150 && my >= by && my <= by + 44) restartGame();
+    const bx = W/2 - 75, by = H/2 + 50;
+    if (mx >= bx && mx <= bx+150 && my >= by && my <= by+44) restartGame();
     return;
   }
 
-  // Trash zone
   if (selectedItem && mx >= TRASH_X && my >= TRASH_Y) { discardSelected(); return; }
 
   const hit = getItemAt(mx, my);
   if (hit && hit.scale >= 0.85) {
-    if (orders.some(o => o.type === hit.type)) {
-      if (tryAutoServe(hit.type)) {
-        spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
-        removeItem(hit);
-      }
+    // Check if it satisfies any active order want
+    if (orders.some(o => o.wants.some(w => !w.served && w.type === hit.type))) {
+      spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
+      removeItem(hit);
+      tryServeType(hit.type);
       return;
     }
     selectedItem = (hit === selectedItem) ? null : hit;
@@ -649,89 +674,80 @@ canvas.addEventListener('click', e => {
   }
 
   selectedItem = null;
-  if (my > ARENA_TOP) spawnPickle(mx, my);
+  if (my > ARENA_TOP) spawnItem(mx, my);
 });
 
-// ─── Update ───────────────────────────────────────────────────────────────────
+// ─── Update loop ──────────────────────────────────────────────────────────────
+let lastBoardCheck = 0;
+
 function update() {
   if (gameOver) return;
 
-  if (magnetActive && Date.now() > magnetEnd) {
-    magnetActive = false;
-    updateUI();
-  }
-
+  if (magnetActive && Date.now() > magnetEnd) { magnetActive = false; updateUI(); }
   tickOrders();
+
+  // Periodic auto-check: serve any board item that matches an order
+  if (Date.now() - lastBoardCheck > 2000) {
+    lastBoardCheck = Date.now();
+    checkBoardForOrders();
+  }
 
   // Auto-dropper
   if (autoDropLevel > 0 && items.length < maxItems) {
     const interval = AUTO_DROP_INTERVALS[autoDropLevel - 1];
     if (Date.now() - autoDropLastMs >= interval) {
       autoDropLastMs = Date.now();
-      // Drop at a random x near the top of the arena
       const type = getLuckyDropType();
       const r    = ITEMS[type].radius;
       const x    = r + Math.random() * (W - r * 2);
       const y    = ARENA_TOP + r + 10 + Math.random() * 60;
-      const item = createItem(type, x, y);
-      items.push(item);
+      const it   = createItem(type, x, y);
+      items.push(it);
       if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
       updateUI();
+      checkBoardForOrders();
     }
   }
 
-  const pullStrength = magnetActive ? MAGNET_LEVELS[magnetLevel].pull : 0.025;
-  const pullRange    = magnetActive ? 500 : 200;
+  const pull = magnetActive ? MAGNET_LEVELS[magnetLevel].pull : 0.025;
+  const rng  = magnetActive ? 500 : 200;
 
   for (const it of items) {
     if (it.scale < 1) it.scale = Math.min(1, it.scale + 0.07);
     if (it.glowTimer > 0) it.glowTimer--;
-
-    // Micro-drift
     if (Math.random() < 0.025) {
       it.vx += (Math.random() - 0.5) * 0.18;
       it.vy += (Math.random() - 0.5) * 0.18;
     }
-
-    // Attract same-type items
     for (const other of items) {
       if (other === it || other.type !== it.type) continue;
       const dx = other.x - it.x, dy = other.y - it.y;
-      const d  = Math.sqrt(dx * dx + dy * dy);
-      if (d > 0 && d < pullRange) {
-        const f = pullStrength / d;
-        it.vx += dx * f; it.vy += dy * f;
-      }
+      const d  = Math.sqrt(dx*dx + dy*dy);
+      if (d > 0 && d < rng) { it.vx += dx*pull/d; it.vy += dy*pull/d; }
     }
-
     it.vx *= 0.97; it.vy *= 0.97;
-    const spd = Math.sqrt(it.vx ** 2 + it.vy ** 2);
-    if (spd > 1.8) { it.vx = it.vx / spd * 1.8; it.vy = it.vy / spd * 1.8; }
-
+    const spd = Math.sqrt(it.vx**2 + it.vy**2);
+    if (spd > 1.8) { it.vx = it.vx/spd*1.8; it.vy = it.vy/spd*1.8; }
     it.x += it.vx; it.y += it.vy;
-    if (it.x - it.radius < 0)          { it.x = it.radius;          it.vx =  Math.abs(it.vx); }
-    if (it.x + it.radius > W)          { it.x = W - it.radius;      it.vx = -Math.abs(it.vx); }
-    if (it.y - it.radius < ARENA_TOP)  { it.y = ARENA_TOP + it.radius; it.vy = Math.abs(it.vy); }
-    if (it.y + it.radius > H)          { it.y = H - it.radius;      it.vy = -Math.abs(it.vy); }
+    if (it.x - it.radius < 0)         { it.x = it.radius;          it.vx =  Math.abs(it.vx); }
+    if (it.x + it.radius > W)         { it.x = W - it.radius;      it.vx = -Math.abs(it.vx); }
+    if (it.y - it.radius < ARENA_TOP) { it.y = ARENA_TOP+it.radius; it.vy = Math.abs(it.vy); }
+    if (it.y + it.radius > H)         { it.y = H - it.radius;      it.vy = -Math.abs(it.vy); }
   }
 
-  // Separation (different-type items only)
+  // Separation (different-type only)
   for (let i = 0; i < items.length; i++) {
-    for (let j = i + 1; j < items.length; j++) {
+    for (let j = i+1; j < items.length; j++) {
       const a = items[i], b = items[j];
       if (a.type === b.type && a.scale >= 0.85 && b.scale >= 0.85) continue;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const d  = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      const min = a.radius + b.radius;
-      if (d < min) {
-        const push = (min - d) / 2, nx = dx / d, ny = dy / d;
-        a.x -= nx * push; a.y -= ny * push;
-        b.x += nx * push; b.y += ny * push;
-        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-        if (rv < 0) {
-          a.vx -= rv * nx * 0.3; a.vy -= rv * ny * 0.3;
-          b.vx += rv * nx * 0.3; b.vy += rv * ny * 0.3;
-        }
+      const dx = b.x-a.x, dy = b.y-a.y;
+      const d  = Math.sqrt(dx*dx+dy*dy)||0.01;
+      const mn = a.radius+b.radius;
+      if (d < mn) {
+        const push = (mn-d)/2, nx = dx/d, ny = dy/d;
+        a.x -= nx*push; a.y -= ny*push; b.x += nx*push; b.y += ny*push;
+        const rv = (b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
+        if (rv<0) { a.vx-=rv*nx*0.3; a.vy-=rv*ny*0.3; b.vx+=rv*nx*0.3; b.vy+=rv*ny*0.3; }
       }
     }
   }
@@ -740,237 +756,261 @@ function update() {
   const merged = new Set();
   for (let i = 0; i < items.length; i++) {
     if (merged.has(items[i].id)) continue;
-    for (let j = i + 1; j < items.length; j++) {
+    for (let j = i+1; j < items.length; j++) {
       if (merged.has(items[j].id)) continue;
       const a = items[i], b = items[j];
-      if (a.type !== b.type) continue;
-      if (a.scale < 0.85 || b.scale < 0.85) continue;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      if (dx * dx + dy * dy <= (a.radius + b.radius + 4) ** 2) {
-        merged.add(a.id); merged.add(b.id);
-        mergeItems(a, b);
-        break;
+      if (a.type !== b.type || a.scale < 0.85 || b.scale < 0.85) continue;
+      const dx = b.x-a.x, dy = b.y-a.y;
+      if (dx*dx+dy*dy <= (a.radius+b.radius+4)**2) {
+        merged.add(a.id); merged.add(b.id); mergeItems(a,b); break;
       }
     }
   }
 
-  // Particles
-  for (let i = particles.length - 1; i >= 0; i--) {
+  for (let i = particles.length-1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.vx *= 0.91; p.vy *= 0.91; p.life -= 0.035;
-    if (p.life <= 0) particles.splice(i, 1);
+    p.x+=p.vx; p.y+=p.vy; p.vx*=0.91; p.vy*=0.91; p.life-=0.035;
+    if (p.life <= 0) particles.splice(i,1);
   }
-
-  // Popups
-  for (let i = popups.length - 1; i >= 0; i--) {
-    const p = popups[i];
-    p.y += p.vy; p.life -= 0.018;
-    if (p.life <= 0) popups.splice(i, 1);
+  for (let i = popups.length-1; i >= 0; i--) {
+    const p = popups[i]; p.y+=p.vy; p.life-=0.018;
+    if (p.life <= 0) popups.splice(i,1);
   }
 }
 
 // ─── Draw helpers ─────────────────────────────────────────────────────────────
-function roundRect(x, y, w, h, r) {
+function rr(x,y,w,h,r) {
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
 }
 
 // ─── Draw orders strip ────────────────────────────────────────────────────────
 function drawOrders() {
-  const now   = Date.now();
-  ctx.fillStyle = '#140700';
+  const now = Date.now();
+  ctx.fillStyle = '#160800';
   ctx.fillRect(0, 0, W, ORDER_H);
   ctx.strokeStyle = '#2a1200'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(0, ORDER_H); ctx.lineTo(W, ORDER_H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,ORDER_H); ctx.lineTo(W,ORDER_H); ctx.stroke();
 
   const slots = maxOrderSlots();
   const slotW = W / slots;
 
-  for (let i = 0; i < slots; i++) {
-    const sx = i * slotW + 10, sw = slotW - 20;
+  for (let si = 0; si < slots; si++) {
+    const sx = si * slotW + 8, sw = slotW - 16;
 
-    if (i < orders.length) {
-      const o    = orders[i];
+    if (si < orders.length) {
+      const o    = orders[si];
       const f    = freshness(o);
       const frac = Math.max(0, (o.deadline - now) / o.duration);
       const urgent = frac < 0.2;
 
-      ctx.fillStyle   = urgent ? 'rgba(180,20,0,0.2)' : 'rgba(255,136,0,0.07)';
-      ctx.strokeStyle = urgent ? '#771100' : '#3a1800';
-      ctx.lineWidth = 1;
-      roundRect(sx, 5, sw, ORDER_H - 12, 7); ctx.fill(); ctx.stroke();
+      // Card background
+      ctx.fillStyle   = urgent ? 'rgba(160,20,0,0.35)' : 'rgba(255,150,50,0.12)';
+      ctx.strokeStyle = urgent ? '#aa2200' : '#6a3000';
+      ctx.lineWidth = 1.5;
+      rr(sx, 5, sw, ORDER_H - 11, 8); ctx.fill(); ctx.stroke();
 
-      // Customer → item
-      ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(o.customer, sx + sw * 0.22, 33);
-      ctx.fillStyle = '#553311'; ctx.font = '9px sans-serif';
-      ctx.fillText('wants', sx + sw * 0.5, 26);
-      ctx.fillStyle = '#553311'; ctx.font = '13px sans-serif';
-      ctx.fillText('›', sx + sw * 0.5, 37);
-      ctx.font = '22px serif';
-      ctx.fillText(ITEMS[o.type].emoji, sx + sw * 0.78, 33);
+      // ── Customer ──
+      ctx.font = '32px serif';   // BIG emoji so it's clearly visible
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      // Light halo behind customer for contrast
+      ctx.shadowColor = 'rgba(255,200,80,0.5)'; ctx.shadowBlur = 12;
+      ctx.fillText(o.customer, sx + 26, 38);
+      ctx.shadowBlur = 0;
 
-      // Freshness stars
-      ctx.fillStyle = f.color; ctx.font = '10px sans-serif';
-      ctx.fillText('⭐'.repeat(f.stars) + '☆'.repeat(3 - f.stars), sx + sw / 2, 56);
+      // "wants" label
+      ctx.fillStyle = '#886644'; ctx.font = '8px sans-serif';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      ctx.fillText('wants:', sx + 52, 8);
+
+      // ── Wanted items ──
+      const unserved = o.wants.filter(w => !w.served);
+      const served   = o.wants.filter(w => w.served);
+      const allWants = o.wants;
+      const itemsPerRow = allWants.length;
+      const cellW = Math.min(44, (sw - 55) / itemsPerRow);
+
+      allWants.forEach((want, wi) => {
+        const ix = sx + 52 + wi * cellW + cellW / 2;
+        const iy = 40;
+
+        // Circle bg
+        ctx.beginPath(); ctx.arc(ix, iy, 18, 0, Math.PI*2);
+        ctx.fillStyle = want.served ? 'rgba(0,180,80,0.25)' : 'rgba(255,120,0,0.18)';
+        ctx.fill();
+        ctx.strokeStyle = want.served ? '#44cc66' : f.color;
+        ctx.lineWidth = 1.5; ctx.stroke();
+
+        // Emoji
+        ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.globalAlpha = want.served ? 0.5 : 1;
+        ctx.fillText(ITEMS[want.type].emoji, ix, iy);
+        ctx.globalAlpha = 1;
+
+        // Tick / name
+        if (want.served) {
+          ctx.fillStyle = '#44cc66'; ctx.font = 'bold 12px sans-serif';
+          ctx.fillText('✓', ix, iy);
+        } else {
+          ctx.fillStyle = '#886644'; ctx.font = '7px sans-serif';
+          ctx.textBaseline = 'top';
+          ctx.fillText(ITEMS[want.type].name, ix, iy + 20);
+        }
+      });
+
+      // Freshness stars (right side)
+      const starsX = sx + sw - 5;
+      ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+      ctx.fillStyle = f.color; ctx.font = '9px sans-serif';
+      ctx.fillText('⭐'.repeat(f.stars) + '☆'.repeat(3-f.stars), starsX, 8);
+
+      // Combo badge
+      if (o.isCombo) {
+        ctx.fillStyle = '#ffcc44'; ctx.font = 'bold 8px sans-serif';
+        ctx.fillText('COMBO', starsX, 20);
+      }
 
       // Timer bar
-      const barX = sx + 5, barY = 66, barW = sw - 10, barH = 7;
-      ctx.fillStyle = '#1a0800'; roundRect(barX, barY, barW, barH, 3); ctx.fill();
-      const col = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
-      ctx.fillStyle = col;
-      if (frac > 0) { roundRect(barX, barY, barW * frac, barH, 3); ctx.fill(); }
-
-      // Time remaining (only show when < 30s)
-      const secLeft = Math.ceil((o.deadline - now) / 1000);
-      if (secLeft <= 30) {
+      const bx = sx+5, by = ORDER_H-21, bw = sw-10, bh = 7;
+      ctx.fillStyle = '#160800'; rr(bx,by,bw,bh,3); ctx.fill();
+      if (frac > 0) {
+        ctx.fillStyle = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
+        rr(bx,by,bw*frac,bh,3); ctx.fill();
+      }
+      // Seconds remaining only when low
+      const sec = Math.ceil((o.deadline-now)/1000);
+      if (sec <= 30) {
         ctx.fillStyle = urgent ? '#ff4422' : '#886644';
-        ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText(`${secLeft}s`, sx + sw / 2, 84);
+        ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(`${sec}s`, sx+sw/2, ORDER_H-9);
       }
 
     } else {
-      ctx.fillStyle   = 'rgba(255,255,255,0.02)';
-      ctx.strokeStyle = '#1a0900'; ctx.lineWidth = 1;
-      roundRect(sx, 5, sw, ORDER_H - 12, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.strokeStyle = '#1a0900'; ctx.lineWidth=1;
+      rr(sx,5,sw,ORDER_H-11,8); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#2a1400'; ctx.font = '10px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(ordersServed < 3 ? 'Serve 3 to unlock' : 'Incoming…', sx + sw / 2, ORDER_H / 2 - 4);
+      ctx.fillText(ordersServed < 3 ? 'Serve 3 to unlock' : 'Incoming…', sx+sw/2, ORDER_H/2-4);
     }
   }
 
-  // Magnet active indicator
   if (magnetActive) {
-    const rem = Math.ceil((magnetEnd - Date.now()) / 1000);
+    const rem = Math.ceil((magnetEnd-Date.now())/1000);
     ctx.fillStyle = '#44aaff'; ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-    ctx.fillText(`🧲 ${rem}s`, W - 8, 4);
+    ctx.fillText(`🧲 ${rem}s`, W-8, 5);
   }
 }
 
 // ─── Draw arena ───────────────────────────────────────────────────────────────
 function drawArena() {
   ctx.strokeStyle = 'rgba(255,80,0,0.03)'; ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, ARENA_TOP); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = ARENA_TOP; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  for (let x=0; x<W; x+=40) { ctx.beginPath(); ctx.moveTo(x,ARENA_TOP); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y=ARENA_TOP; y<H; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
 
-  // Magnet field visualisation when active
   if (magnetActive) {
-    const frac = (magnetEnd - Date.now()) / 30000;
-    ctx.fillStyle = `rgba(30,100,200,${0.04 * frac})`;
-    ctx.fillRect(0, ARENA_TOP, W, H - ARENA_TOP);
+    const frac = (magnetEnd-Date.now())/30000;
+    ctx.fillStyle = `rgba(20,80,180,${0.04*frac})`;
+    ctx.fillRect(0, ARENA_TOP, W, H-ARENA_TOP);
   }
 
-  const trashLit = selectedItem !== null;
-  ctx.fillStyle   = trashLit ? 'rgba(255,60,0,0.22)' : 'rgba(60,15,0,0.5)';
-  ctx.strokeStyle = trashLit ? '#ff5500' : '#331100';
-  ctx.lineWidth   = trashLit ? 2 : 1;
-  roundRect(TRASH_X, TRASH_Y, TRASH_SIZE, TRASH_SIZE, 8); ctx.fill(); ctx.stroke();
-  ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('🗑️', TRASH_X + TRASH_SIZE / 2, TRASH_Y + TRASH_SIZE / 2);
-  if (trashLit) {
-    ctx.fillStyle = '#ff7755'; ctx.font = '8px sans-serif';
-    ctx.fillText('TRASH', TRASH_X + TRASH_SIZE / 2, TRASH_Y + TRASH_SIZE - 8);
-  }
+  // Trash zone
+  const lit = selectedItem !== null;
+  ctx.fillStyle   = lit ? 'rgba(255,60,0,0.22)' : 'rgba(50,12,0,0.55)';
+  ctx.strokeStyle = lit ? '#ff5500' : '#2a0e00';
+  ctx.lineWidth   = lit ? 2 : 1;
+  rr(TRASH_X, TRASH_Y, TRASH_SZ, TRASH_SZ, 8); ctx.fill(); ctx.stroke();
+  ctx.font='26px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🗑️', TRASH_X+TRASH_SZ/2, TRASH_Y+TRASH_SZ/2);
+  if (lit) { ctx.fillStyle='#ff7755'; ctx.font='8px sans-serif'; ctx.fillText('TRASH',TRASH_X+TRASH_SZ/2,TRASH_Y+TRASH_SZ-8); }
 }
 
 // ─── Draw items ───────────────────────────────────────────────────────────────
 function drawItems() {
   for (const p of particles) {
     ctx.globalAlpha = p.life * 0.9;
-    ctx.font = `${p.size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(p.emoji, p.x, p.y);
   }
   ctx.globalAlpha = 1;
 
   for (const it of items) {
-    const isSel    = it === selectedItem;
-    const orderIdx = orders.findIndex(o => o.type === it.type);
-    const isWanted = orderIdx !== -1;
-    const f        = isWanted ? freshness(orders[orderIdx]) : null;
+    const isSel     = it === selectedItem;
+    const wantOrder = orders.find(o => o.wants.some(w => !w.served && w.type === it.type));
+    const isWanted  = !!wantOrder;
+    const f         = isWanted ? freshness(wantOrder) : null;
 
     ctx.save();
     ctx.translate(it.x, it.y);
     ctx.scale(it.scale, it.scale);
 
-    if (isSel)             { ctx.shadowColor = '#ff5500'; ctx.shadowBlur = 22; }
-    else if (it.glowTimer) { ctx.shadowColor = '#ffdd00'; ctx.shadowBlur = 14 + it.glowTimer * 0.3; }
-    else if (isWanted)     { ctx.shadowColor = f.color;   ctx.shadowBlur = 12; }
-    else if (magnetActive) { ctx.shadowColor = '#2266ff'; ctx.shadowBlur = 6; }
+    if (isSel)             { ctx.shadowColor='#ff5500'; ctx.shadowBlur=22; }
+    else if (it.glowTimer) { ctx.shadowColor='#ffdd00'; ctx.shadowBlur=14+it.glowTimer*0.3; }
+    else if (isWanted)     { ctx.shadowColor=f.color;   ctx.shadowBlur=14; }
+    else if (magnetActive) { ctx.shadowColor='#2266ff'; ctx.shadowBlur=6; }
 
-    ctx.beginPath(); ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
-    const g = ctx.createRadialGradient(-it.radius*.28, -it.radius*.28, it.radius*.1, 0, 0, it.radius);
-    g.addColorStop(0, 'rgba(255,255,255,0.14)');
-    g.addColorStop(1, 'rgba(0,0,0,0.42)');
-    ctx.fillStyle = g; ctx.fill();
+    ctx.beginPath(); ctx.arc(0,0,it.radius,0,Math.PI*2);
+    const g = ctx.createRadialGradient(-it.radius*.28,-it.radius*.28,it.radius*.1,0,0,it.radius);
+    g.addColorStop(0,'rgba(255,255,255,0.14)'); g.addColorStop(1,'rgba(0,0,0,0.42)');
+    ctx.fillStyle=g; ctx.fill();
     ctx.strokeStyle = isSel ? '#ff6600' : isWanted ? f.color : magnetActive ? '#2255cc' : 'rgba(255,160,60,0.22)';
-    ctx.lineWidth   = isSel || isWanted ? 2.5 : 1.5;
-    ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.lineWidth = isSel||isWanted ? 2.5 : 1.5;
+    ctx.stroke(); ctx.shadowBlur=0;
 
-    ctx.font = `${it.radius * 1.1}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font=`${it.radius*1.1}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(ITEMS[it.type].emoji, 0, 2);
 
     if (isSel) {
-      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 140);
-      ctx.strokeStyle = `rgba(255,85,0,${0.3 + 0.3 * pulse})`;
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(0, 0, it.radius + 7, 0, Math.PI * 2); ctx.stroke();
+      const pulse = 0.5+0.5*Math.sin(Date.now()/140);
+      ctx.strokeStyle=`rgba(255,85,0,${0.3+0.3*pulse})`; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.arc(0,0,it.radius+7,0,Math.PI*2); ctx.stroke();
     }
-
     if (isWanted && !isSel) {
-      ctx.fillStyle = f.color; ctx.font = `${it.radius * 0.38}px sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('▲', 0, -it.radius * 0.6);
+      ctx.fillStyle=f.color; ctx.font=`${it.radius*.38}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillText('▲', 0, -it.radius*.6);
     }
-
     ctx.restore();
   }
 
   for (const p of popups) {
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = '#ffdd44'; ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
-    ctx.fillText(p.text, p.x, p.y); ctx.shadowBlur = 0;
+    ctx.globalAlpha=p.life;
+    ctx.fillStyle='#ffdd44'; ctx.font='bold 15px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#000'; ctx.shadowBlur=4;
+    ctx.fillText(p.text, p.x, p.y); ctx.shadowBlur=0;
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha=1;
 }
 
-// ─── Draw game over ───────────────────────────────────────────────────────────
+// ─── Game over overlay ────────────────────────────────────────────────────────
 function drawGameOver() {
-  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillRect(0, 0, W, H);
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-
-  ctx.font = 'bold 38px sans-serif'; ctx.fillStyle = '#ff4422';
-  ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
-  ctx.fillText('CLOSED! 🍔', W / 2, H / 2 - 80);
-  ctx.shadowBlur = 0;
-
-  ctx.font = '20px sans-serif'; ctx.fillStyle = '#ffcc44';
-  ctx.fillText(`Final Score: ${score.toLocaleString()}`, W / 2, H / 2 - 30);
-  ctx.fillStyle = '#aa8833'; ctx.font = '15px sans-serif';
-  ctx.fillText(`Best: ${best.toLocaleString()}`, W / 2, H / 2 + 5);
-  ctx.fillStyle = '#885522';
-  ctx.fillText(`Orders served: ${ordersServed}`, W / 2, H / 2 + 28);
-
-  const bx = W / 2 - 75, by = H / 2 + 50;
-  ctx.fillStyle = '#cc4400'; ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2;
-  roundRect(bx, by, 150, 44, 8); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif';
-  ctx.fillText('Open Again! 🔓', W / 2, by + 22);
+  ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font='bold 38px sans-serif'; ctx.fillStyle='#ff4422';
+  ctx.shadowColor='#ff0000'; ctx.shadowBlur=20;
+  ctx.fillText('CLOSED! 🍔', W/2, H/2-80); ctx.shadowBlur=0;
+  ctx.font='20px sans-serif'; ctx.fillStyle='#ffcc44';
+  ctx.fillText(`Final Score: ${score.toLocaleString()}`, W/2, H/2-30);
+  ctx.fillStyle='#aa8833'; ctx.font='15px sans-serif';
+  ctx.fillText(`Best: ${best.toLocaleString()}`, W/2, H/2+5);
+  ctx.fillStyle='#885522';
+  ctx.fillText(`Orders served: ${ordersServed}`, W/2, H/2+28);
+  const bx=W/2-75, by=H/2+50;
+  ctx.fillStyle='#cc4400'; ctx.strokeStyle='#ff8800'; ctx.lineWidth=2;
+  rr(bx,by,150,44,8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif';
+  ctx.fillText('Open Again! 🔓', W/2, by+22);
 }
 
 // ─── Main loop ────────────────────────────────────────────────────────────────
 function loop() {
   update();
-  updateMagnetCooldownLabel();
-  ctx.clearRect(0, 0, W, H);
+  updateMagnetLabel();
+  ctx.clearRect(0,0,W,H);
   drawOrders();
   drawArena();
   drawItems();
