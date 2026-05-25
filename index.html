@@ -118,7 +118,7 @@
 <div id="game-wrap">
   <h1>🍔 Hamburger Empire</h1>
   <canvas id="canvas" width="540" height="660"></canvas>
-  <div id="hint">Click arena → drop pickle &nbsp;·&nbsp; Click item → select &nbsp;·&nbsp; Selected + 🗑 → trash</div>
+  <div id="hint">Click arena → drop pickle &nbsp;·&nbsp; Click wanted item (▲) → serve &nbsp;·&nbsp; Click other item → select, then 🗑 to trash</div>
 </div>
 
 <div id="sidebar">
@@ -474,6 +474,15 @@ canvas.addEventListener('click', e => {
 
   const hit = getItemAt(mx, my);
   if (hit && hit.scale >= 0.85) {
+    // Wanted item → serve it
+    if (orders.some(o => o.type === hit.type)) {
+      if (tryAutoServe(hit.type)) {
+        spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
+        removeItem(hit);
+      }
+      return;
+    }
+    // Not wanted → select for trash (toggle)
     selectedItem = (hit === selectedItem) ? null : hit;
     return;
   }
