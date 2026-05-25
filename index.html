@@ -6,111 +6,62 @@
   <title>Hamburger Empire</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      background: #110600;
-      color: #fff;
+      background: #110600; color: #fff;
       font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 18px;
-      gap: 18px;
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; padding: 18px; gap: 18px;
     }
+    #game-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    h1 { font-size: 1.5rem; color: #ffcc44; text-shadow: 0 0 14px #ff8800; letter-spacing: 2px; }
+    #canvas { border: 2px solid #ff8800; border-radius: 8px; background: #0c0300;
+              display: block; box-shadow: 0 0 28px #ff440033; cursor: crosshair; }
+    #hint { color: #664422; font-size: 0.78rem; }
 
-    #game-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-    }
+    #sidebar { width: 210px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
+    .panel { background: #1e0c00; border: 1px solid #8b4400; border-radius: 8px; padding: 11px; }
+    .panel h2 { font-size: 0.75rem; color: #ffcc44; text-transform: uppercase;
+                letter-spacing: 1px; margin-bottom: 8px; }
 
-    h1 {
-      font-size: 1.5rem;
-      color: #ffcc44;
-      text-shadow: 0 0 14px #ff8800;
-      letter-spacing: 2px;
-    }
+    #hearts-row { font-size: 1.4rem; letter-spacing: 3px; }
+    #score-val  { font-size: 1.8rem; color: #ff8800; font-weight: bold; line-height: 1; }
+    #best-val   { font-size: 0.72rem; color: #664422; margin-top: 3px; }
+    #coins-val  { font-size: 0.8rem; color: #ccaa00; margin-top: 5px; }
+    #day-val    { font-size: 0.95rem; color: #ffaa44; }
+    #served-val { font-size: 0.72rem; color: #664422; margin-top: 3px; }
 
-    #canvas {
-      border: 2px solid #ff8800;
-      border-radius: 8px;
-      background: #0c0300;
-      display: block;
-      box-shadow: 0 0 28px #ff440033;
-      cursor: crosshair;
-    }
-
-    #hint {
-      color: #664422;
-      font-size: 0.78rem;
-    }
-
-    #sidebar {
-      width: 200px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      padding-top: 44px;
-    }
-
-    .panel {
-      background: #1e0c00;
-      border: 1px solid #8b4400;
-      border-radius: 8px;
-      padding: 12px;
-    }
-
-    .panel h2 {
-      font-size: 0.78rem;
-      color: #ffcc44;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-    }
-
-    #score-val {
-      font-size: 2rem;
-      color: #ff8800;
-      font-weight: bold;
-      line-height: 1;
-    }
-
-    #best-val  { font-size: 0.75rem; color: #664422; margin-top: 3px; }
-    #coins-val { font-size: 0.82rem; color: #ccaa00; margin-top: 6px; }
-
-    #day-val { font-size: 1rem; color: #ffaa44; }
-    #served-val { font-size: 0.75rem; color: #664422; margin-top: 3px; }
-
-    #cap-row { display: flex; justify-content: space-between; font-size: 0.8rem; color: #cc9944; margin-bottom: 6px; }
-    #cap-bar-wrap { background: #1a0800; border-radius: 4px; height: 8px; margin-bottom: 8px; overflow: hidden; }
+    #cap-row { display: flex; justify-content: space-between; font-size: 0.78rem; color: #cc9944; margin-bottom: 5px; }
+    #cap-bar-wrap { background: #1a0800; border-radius: 4px; height: 7px; margin-bottom: 7px; overflow: hidden; }
     #cap-bar { height: 100%; border-radius: 4px; transition: width 0.2s, background 0.3s; }
 
     .upg-btn {
-      width: 100%;
-      background: #2a1200;
-      border: 1px solid #6b3400;
-      border-radius: 6px;
-      color: #fff;
-      padding: 7px 10px;
-      font-size: 0.8rem;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: background 0.15s;
-      margin-bottom: 6px;
+      width: 100%; background: #2a1200; border: 1px solid #6b3400; border-radius: 6px;
+      color: #fff; padding: 6px 9px; font-size: 0.78rem; cursor: pointer;
+      text-align: left; display: flex; justify-content: space-between; align-items: center;
+      transition: background 0.15s; margin-bottom: 5px;
     }
     .upg-btn:last-child { margin-bottom: 0; }
     .upg-btn:hover:not(:disabled) { background: #3d1a00; }
     .upg-btn:disabled { opacity: 0.3; cursor: default; }
-    .upg-btn .cost { color: #ccaa00; font-size: 0.72rem; }
+    .upg-btn .cost { color: #ccaa00; font-size: 0.7rem; }
 
-    .chain-grid { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
-    .chain-step { font-size: 1.15rem; }
-    .chain-arrow { font-size: 0.6rem; color: #553311; }
+    /* Magnet panel */
+    #magnet-panel {}
+    #magnet-power-row { display: flex; align-items: center; justify-content: space-between;
+                        margin-bottom: 6px; font-size: 0.78rem; color: #aaddff; }
+    #magnet-pips { display: flex; gap: 3px; }
+    .pip { width: 10px; height: 10px; border-radius: 2px; border: 1px solid #4488bb; background: #0a2233; }
+    .pip.on { background: #44aaff; border-color: #88ccff; }
+    #magnet-cd { font-size: 0.7rem; color: #446688; margin-bottom: 5px; min-height: 14px; }
+
+    /* Chain */
+    #chain-list { display: flex; flex-direction: column; gap: 3px; }
+    .chain-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+    .chain-emoji { font-size: 1.05rem; width: 22px; text-align: center; }
+    .chain-name { flex: 1; }
+    .chain-row.locked { opacity: 0.3; filter: grayscale(1); }
+    .chain-row.locked .chain-name { color: #553311; }
+    .chain-arrow { font-size: 0.55rem; color: #443311; margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -122,6 +73,11 @@
 </div>
 
 <div id="sidebar">
+  <div class="panel">
+    <h2>Lives</h2>
+    <div id="hearts-row">❤️❤️❤️</div>
+  </div>
+
   <div class="panel">
     <h2>Score</h2>
     <div id="score-val">0</div>
@@ -137,176 +93,226 @@
 
   <div class="panel">
     <h2>Kitchen</h2>
-    <div id="cap-row">
-      <span id="cap-label">0 / 12</span>
-      <span id="cap-pct">0%</span>
-    </div>
+    <div id="cap-row"><span id="cap-label">0 / 12</span><span id="cap-pct">0%</span></div>
     <div id="cap-bar-wrap"><div id="cap-bar"></div></div>
     <button class="upg-btn" id="btn-expand" onclick="buyExpand()">
-      <span>Expand +4 slots</span>
-      <span class="cost" id="expand-cost">🪙 30</span>
+      <span>Expand +4 slots</span><span class="cost" id="expand-cost">🪙 30</span>
+    </button>
+  </div>
+
+  <div class="panel" id="magnet-panel">
+    <h2>🧲 Magnet</h2>
+    <div id="magnet-power-row">
+      <span>Power <span id="magnet-lvl">1</span></span>
+      <div id="magnet-pips"></div>
+    </div>
+    <div id="magnet-cd"></div>
+    <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-bottom:5px">
+      <span>⚡ Activate</span><span class="cost" id="magnet-effect-label">1 wave + 30s</span>
+    </button>
+    <button class="upg-btn" id="btn-magnet-upg" onclick="upgradeMagnet()">
+      <span>↑ Upgrade Power</span><span class="cost" id="magnet-upg-cost">🪙 60</span>
     </button>
   </div>
 
   <div class="panel">
-    <h2>Power-ups</h2>
-    <button class="upg-btn" id="btn-attract" onclick="buyAttract()">
-      <span>🧲 Magnet (30s)</span>
-      <span class="cost">🪙 25</span>
-    </button>
+    <h2>💨 Clear Junk</h2>
     <button class="upg-btn" id="btn-clear" onclick="buyClear()">
-      <span>💨 Clear Junk</span>
-      <span class="cost">🪙 50</span>
+      <span>Remove non-orders</span><span class="cost">🪙 50</span>
     </button>
   </div>
 
   <div class="panel">
     <h2>Merge Chain</h2>
-    <div class="chain-grid" id="chain-grid"></div>
+    <div id="chain-list"></div>
   </div>
 </div>
 
 <script>
-// ─── Setup ────────────────────────────────────────────────────────────────────
-
+// ─── Canvas / constants ───────────────────────────────────────────────────────
 const canvas = document.getElementById('canvas');
 const ctx    = canvas.getContext('2d');
-const W = canvas.width;
-const H = canvas.height;
+const W = canvas.width;   // 540
+const H = canvas.height;  // 660
 
-const ORDER_H   = 110;
-const ARENA_TOP = ORDER_H;
+const ORDER_H    = 110;
+const ARENA_TOP  = ORDER_H;
 const TRASH_SIZE = 68;
-const TRASH_X   = W - TRASH_SIZE - 8;
-const TRASH_Y   = H - TRASH_SIZE - 8;
+const TRASH_X    = W - TRASH_SIZE - 8;
+const TRASH_Y    = H - TRASH_SIZE - 8;
 
 const ITEMS = [
-  { emoji: '🥒', name: 'Pickle',     radius: 20, value: 5   },
-  { emoji: '🍅', name: 'Tomato',     radius: 26, value: 12  },
-  { emoji: '🥬', name: 'Lettuce',    radius: 32, value: 25  },
-  { emoji: '🧅', name: 'Onion',      radius: 38, value: 50  },
-  { emoji: '🧀', name: 'Cheese',     radius: 44, value: 90  },
+  { emoji: '🥒', name: 'Pickle',     radius: 20, value:   5 },
+  { emoji: '🍅', name: 'Tomato',     radius: 26, value:  12 },
+  { emoji: '🥬', name: 'Lettuce',    radius: 32, value:  25 },
+  { emoji: '🧅', name: 'Onion',      radius: 38, value:  50 },
+  { emoji: '🧀', name: 'Cheese',     radius: 44, value:  90 },
   { emoji: '🥩', name: 'Patty',      radius: 50, value: 160 },
   { emoji: '🍔', name: 'Burger',     radius: 58, value: 280 },
   { emoji: '🍟', name: 'Fries',      radius: 66, value: 480 },
   { emoji: '🥤', name: 'Shake',      radius: 74, value: 800 },
   { emoji: '🎉', name: 'Value Meal', radius: 84, value:1400 },
 ];
-
 const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕','👲'];
 
-// freshness thresholds in ms
-const FRESH_MS  = 25000;
-const WARM_MS   = 55000;
+// Freshness thresholds
+const FRESH_MS = 30000;
+const WARM_MS  = 60000;
+
+// Magnet upgrade: [waves, attraction-strength, cost]
+const MAGNET_LEVELS = [
+  { waves: 1, pull: 0.08, label: '1 wave + 30s' },
+  { waves: 2, pull: 0.14, label: '2 waves + 30s' },
+  { waves: 3, pull: 0.22, label: '3 waves + 30s' },
+  { waves: 4, pull: 0.32, label: '4 waves + 30s' },
+  { waves: 5, pull: 0.45, label: '5 waves + 30s' },
+];
+const MAGNET_UPGRADE_COSTS = [60, 150, 350, 800];
+const MAGNET_COOLDOWN_MS   = 30000;
 
 // ─── Game state ───────────────────────────────────────────────────────────────
-
 let score        = 0;
 let best         = 0;
 let coins        = 0;
+let hearts       = 3;
+let maxHearts    = 3;
 let ordersServed = 0;
 let maxItems     = 12;
 let expandLevel  = 0;
-const EXPAND_COSTS = [30, 80, 200, 500];
-
-let magnetActive = false;
-let magnetEnd    = 0;
+let highestMerge = 0;   // highest tier ever merged TO
+let gameOver     = false;
 let selectedItem = null;
+
+let magnetLevel       = 0;   // index into MAGNET_LEVELS
+let magnetActive      = false;
+let magnetEnd         = 0;
+let magnetCooldownEnd = 0;
+
+const EXPAND_COSTS = [30, 80, 200, 500];
 
 const items     = [];
 const orders    = [];
 const particles = [];
 const popups    = [];
-
-let nextId  = 0;
+let nextId   = 0;
 let orderSeed = 0;
 
-// ─── Merge chain UI ──────────────────────────────────────────────────────────
-
-(function() {
-  const g = document.getElementById('chain-grid');
+// ─── Chain sidebar ────────────────────────────────────────────────────────────
+function buildChainList() {
+  const list = document.getElementById('chain-list');
+  list.innerHTML = '';
   ITEMS.forEach((it, i) => {
-    const s = document.createElement('span');
-    s.className = 'chain-step';
-    s.title = it.name;
-    s.textContent = it.emoji;
-    g.appendChild(s);
+    const row = document.createElement('div');
+    row.className = 'chain-row' + (i > highestMerge + 1 ? ' locked' : '');
+    row.id = `chain-row-${i}`;
+    const emoji = document.createElement('span');
+    emoji.className = 'chain-emoji';
+    emoji.textContent = i > highestMerge + 1 ? '❓' : it.emoji;
+    const name = document.createElement('span');
+    name.className = 'chain-name';
+    name.textContent = i > highestMerge + 1 ? '???' : it.name;
+    row.appendChild(emoji);
+    row.appendChild(name);
     if (i < ITEMS.length - 1) {
-      const a = document.createElement('span');
-      a.className = 'chain-arrow';
-      a.textContent = '›';
-      g.appendChild(a);
+      const arrow = document.createElement('span');
+      arrow.className = 'chain-arrow';
+      arrow.textContent = '▼';
+      row.appendChild(arrow);
     }
+    list.appendChild(row);
   });
-})();
-
-// ─── Orders ───────────────────────────────────────────────────────────────────
-
-function maxOrderSlots() {
-  // unlock second slot after 3 serves
-  return ordersServed >= 3 ? 2 : 1;
 }
 
+function updateChainList() {
+  ITEMS.forEach((it, i) => {
+    const row = document.getElementById(`chain-row-${i}`);
+    if (!row) return;
+    const locked = i > highestMerge + 1;
+    row.className = 'chain-row' + (locked ? ' locked' : '');
+    row.querySelector('.chain-emoji').textContent = locked ? '❓' : it.emoji;
+    row.querySelector('.chain-name').textContent  = locked ? '???' : it.name;
+  });
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+function maxOrderSlots() { return ordersServed >= 3 ? 2 : 1; }
+
 function maxOrderTier() {
-  // Tier 1 minimum — pickles are the seed ingredient, not orderable
   return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4));
 }
 
+function orderDuration(type) {
+  // Generous: 90s for tomato, 50s for shake, shrinks slowly with difficulty
+  const base = Math.max(45000, (90 - type * 5) * 1000);
+  return base / (1 + Math.floor(ordersServed / 5) * 0.06);
+}
+
 function spawnOrder() {
-  if (orders.length >= maxOrderSlots()) return;
-  // tier 1 (tomato) at minimum; grows with experience
+  if (orders.length >= maxOrderSlots() || gameOver) return;
   const max  = maxOrderTier();
-  const tier = 1 + Math.floor(Math.random() * max);
+  const type = 1 + Math.floor(Math.random() * max);
+  const dur  = orderDuration(type);
   orders.push({
     id: orderSeed++,
-    type: tier,
+    type,
     createdAt: Date.now(),
-    customer: CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)],
+    deadline:  Date.now() + dur,
+    duration:  dur,
+    customer:  CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)],
   });
+}
+
+function tickOrders() {
+  const now = Date.now();
+  for (let i = orders.length - 1; i >= 0; i--) {
+    if (now >= orders[i].deadline) {
+      orders.splice(i, 1);
+      loseHeart();
+      setTimeout(spawnOrder, 2500);
+    }
+  }
 }
 
 function freshness(order) {
   const age = Date.now() - order.createdAt;
-  if (age < FRESH_MS)  return { stars: 3, label: 'Fresh!',    mult: 3, color: '#44dd66' };
-  if (age < WARM_MS)   return { stars: 2, label: 'Getting cold', mult: 2, color: '#ffaa22' };
-  return                      { stars: 1, label: 'Cold…',     mult: 1, color: '#cc4422' };
+  if (age < FRESH_MS) return { stars: 3, label: 'Fresh!',      mult: 3, color: '#44dd66' };
+  if (age < WARM_MS)  return { stars: 2, label: 'Getting cold', mult: 2, color: '#ffaa22' };
+  return                     { stars: 1, label: 'Cold…',        mult: 1, color: '#cc4422' };
 }
 
 function tryAutoServe(itemType) {
   const idx = orders.findIndex(o => o.type === itemType);
   if (idx === -1) return false;
-
   const order  = orders[idx];
   const f      = freshness(order);
   const earned = ITEMS[itemType].value * f.mult;
-  const coinEarned = Math.max(1, Math.floor(earned / 6));
-
   orders.splice(idx, 1);
-
   score  += earned;
-  coins  += coinEarned;
+  coins  += Math.max(1, Math.floor(earned / 6));
   best    = Math.max(best, score);
   ordersServed++;
-
   addPopup(W / 2, ARENA_TOP + 40, `${f.stars === 3 ? '🌟' : f.stars === 2 ? '⭐' : '☆'} +${earned}`);
+  setTimeout(spawnOrder, 1400);
   updateUI();
-
-  // spawn replacement after short delay
-  setTimeout(spawnOrder, 1200);
   return true;
 }
 
-// ─── Items ────────────────────────────────────────────────────────────────────
+function loseHeart() {
+  if (gameOver) return;
+  hearts = Math.max(0, hearts - 1);
+  addPopup(W / 2, H / 2 - 40, '💔 Order expired!');
+  updateUI();
+  if (hearts <= 0) triggerGameOver();
+}
 
+// ─── Items ────────────────────────────────────────────────────────────────────
 function createItem(type, x, y, vx, vy) {
   return {
-    id: nextId++,
-    type,
-    x, y,
+    id: nextId++, type, x, y,
     vx: vx ?? (Math.random() - 0.5) * 0.8,
     vy: vy ?? (Math.random() - 0.5) * 0.8,
-    radius:    ITEMS[type].radius,
-    scale:     0.05,
+    radius: ITEMS[type].radius,
+    scale: 0.05,
     glowTimer: 0,
   };
 }
@@ -326,11 +332,8 @@ function getItemAt(x, y) {
 }
 
 function spawnPickle(x, y) {
-  if (items.length >= maxItems) {
-    addPopup(x, y, '🍳 Kitchen Full!');
-    return;
-  }
-  const r  = ITEMS[0].radius;
+  if (items.length >= maxItems) { addPopup(x, y, '🍳 Kitchen Full!'); return; }
+  const r = ITEMS[0].radius;
   items.push(createItem(0,
     Math.max(r, Math.min(W - r, x)),
     Math.max(ARENA_TOP + r, Math.min(H - r, y))
@@ -346,60 +349,83 @@ function discardSelected() {
 }
 
 // ─── Merge ────────────────────────────────────────────────────────────────────
-
 function mergeItems(a, b) {
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2;
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
   const nextType = a.type + 1;
-
   spawnParticles(mx, my, ITEMS[a.type].emoji, 7);
-  removeItem(a);
-  removeItem(b);
+  removeItem(a); removeItem(b);
 
-  // Max tier — nowhere to merge
   if (nextType >= ITEMS.length) {
     addPopup(mx, my, '🏆 MAX!');
     updateUI();
-    return;
+    return null;
+  }
+
+  if (nextType > highestMerge) {
+    highestMerge = nextType;
+    updateChainList();
   }
 
   const newItem = createItem(nextType, mx, my, 0, 0);
   newItem.glowTimer = 50;
   items.push(newItem);
 
-  // Check if result auto-serves an order
-  const served = tryAutoServe(nextType);
-  if (served) {
+  if (tryAutoServe(nextType)) {
     spawnParticles(mx, my, ITEMS[nextType].emoji, 10);
     removeItem(newItem);
+    return null;
+  }
+  updateUI();
+  return newItem;
+}
+
+// ─── Magnet ───────────────────────────────────────────────────────────────────
+function activateMagnet() {
+  if (magnetCooldownEnd > Date.now() || gameOver) return;
+  const lvl = MAGNET_LEVELS[magnetLevel];
+
+  // Run N waves of instant merges
+  for (let wave = 0; wave < lvl.waves; wave++) {
+    const usedIds = new Set();
+    // Group items by type
+    const byType = {};
+    for (const it of items) {
+      if (!byType[it.type]) byType[it.type] = [];
+      byType[it.type].push(it);
+    }
+    let anyMerged = false;
+    for (const [typeStr, group] of Object.entries(byType)) {
+      const type = parseInt(typeStr);
+      if (type >= ITEMS.length - 1) continue;
+      for (let i = 0; i + 1 < group.length; i += 2) {
+        const a = group[i], b = group[i + 1];
+        if (usedIds.has(a.id) || usedIds.has(b.id)) continue;
+        if (!items.includes(a) || !items.includes(b)) continue;
+        usedIds.add(a.id); usedIds.add(b.id);
+        mergeItems(a, b);
+        anyMerged = true;
+      }
+    }
+    if (!anyMerged) break;
   }
 
+  // Start 30s attraction buff
+  magnetActive    = true;
+  magnetEnd       = Date.now() + 30000;
+  magnetCooldownEnd = Date.now() + MAGNET_COOLDOWN_MS;
   updateUI();
 }
 
-// ─── Particles / popups ───────────────────────────────────────────────────────
-
-function spawnParticles(x, y, emoji, count = 7) {
-  for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.4;
-    const spd   = 1.8 + Math.random() * 2.5;
-    particles.push({
-      x, y,
-      vx: Math.cos(angle) * spd,
-      vy: Math.sin(angle) * spd,
-      life: 1,
-      emoji,
-      size: 12 + Math.random() * 8,
-    });
-  }
+function upgradeMagnet() {
+  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) return;
+  const cost = MAGNET_UPGRADE_COSTS[magnetLevel];
+  if (coins < cost) return;
+  coins -= cost;
+  magnetLevel++;
+  updateUI();
 }
 
-function addPopup(x, y, text) {
-  popups.push({ x, y, text, life: 1, vy: -1.2 });
-}
-
-// ─── Upgrades ─────────────────────────────────────────────────────────────────
-
+// ─── Other upgrades ───────────────────────────────────────────────────────────
 function buyExpand() {
   if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
   coins -= EXPAND_COSTS[expandLevel];
@@ -408,31 +434,52 @@ function buyExpand() {
   updateUI();
 }
 
-function buyAttract() {
-  if (coins < 25) return;
-  coins -= 25;
-  magnetActive = true;
-  magnetEnd    = Date.now() + 30000;
-  updateUI();
-}
-
 function buyClear() {
   if (coins < 50) return;
   coins -= 50;
-  // remove all items that don't match any active order
-  const wantedTypes = new Set(orders.map(o => o.type));
-  const toRemove = items.filter(it => !wantedTypes.has(it.type));
-  toRemove.forEach(it => {
-    spawnParticles(it.x, it.y, '💨', 4);
-    removeItem(it);
-  });
+  const wanted   = new Set(orders.map(o => o.type));
+  const toRemove = items.filter(it => !wanted.has(it.type));
+  toRemove.forEach(it => { spawnParticles(it.x, it.y, '💨', 4); removeItem(it); });
   addPopup(W / 2, H / 2, `Cleared ${toRemove.length} items!`);
   updateUI();
 }
 
-// ─── UI ───────────────────────────────────────────────────────────────────────
+// ─── Game over / restart ─────────────────────────────────────────────────────
+function triggerGameOver() {
+  gameOver = true;
+  best = Math.max(best, score);
+  updateUI();
+}
 
+function restartGame() {
+  score = 0; coins = 0; hearts = 3; ordersServed = 0;
+  maxItems = 12; expandLevel = 0; highestMerge = 0;
+  magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
+  selectedItem = null; gameOver = false;
+  items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
+  buildChainList();
+  spawnOrder();
+  updateUI();
+}
+
+// ─── Particles / popups ───────────────────────────────────────────────────────
+function spawnParticles(x, y, emoji, count = 7) {
+  for (let i = 0; i < count; i++) {
+    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.4;
+    const spd   = 1.8 + Math.random() * 2.5;
+    particles.push({ x, y, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd,
+                     life: 1, emoji, size: 12 + Math.random()*8 });
+  }
+}
+
+function addPopup(x, y, text) {
+  popups.push({ x, y, text, life: 1, vy: -1.2 });
+}
+
+// ─── UI update ────────────────────────────────────────────────────────────────
 function updateUI() {
+  document.getElementById('hearts-row').textContent =
+    '❤️'.repeat(hearts) + '🖤'.repeat(Math.max(0, maxHearts - hearts));
   document.getElementById('score-val').textContent  = score.toLocaleString();
   document.getElementById('best-val').textContent   = `Best: ${best.toLocaleString()}`;
   document.getElementById('coins-val').textContent  = `🪙 ${coins} coins`;
@@ -442,39 +489,82 @@ function updateUI() {
   const pct = items.length / maxItems;
   document.getElementById('cap-label').textContent = `${items.length} / ${maxItems}`;
   document.getElementById('cap-pct').textContent   = `${Math.round(pct * 100)}%`;
-  document.getElementById('cap-bar').style.width      = `${Math.min(100, pct * 100)}%`;
-  document.getElementById('cap-bar').style.background = pct >= 0.9 ? '#ff3300' : pct >= 0.7 ? '#ff8800' : '#44cc66';
+  document.getElementById('cap-bar').style.width   = `${Math.min(100, pct * 100)}%`;
+  document.getElementById('cap-bar').style.background =
+    pct >= 0.9 ? '#ff3300' : pct >= 0.7 ? '#ff8800' : '#44cc66';
 
+  // Kitchen expand
   const expandBtn  = document.getElementById('btn-expand');
   const expandCost = document.getElementById('expand-cost');
   if (expandLevel >= EXPAND_COSTS.length) {
-    expandBtn.disabled = true;
-    expandCost.textContent = 'Max!';
+    expandBtn.disabled = true; expandCost.textContent = 'Max!';
   } else {
     expandBtn.disabled     = coins < EXPAND_COSTS[expandLevel];
     expandCost.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`;
   }
 
-  document.getElementById('btn-attract').disabled = coins < 25 || magnetActive;
-  document.getElementById('btn-clear').disabled   = coins < 50;
+  // Magnet
+  const lvl     = MAGNET_LEVELS[magnetLevel];
+  const onCd    = magnetCooldownEnd > Date.now();
+  document.getElementById('magnet-lvl').textContent         = magnetLevel + 1;
+  document.getElementById('magnet-effect-label').textContent = lvl.label;
+  document.getElementById('btn-magnet').disabled            = onCd || gameOver;
+
+  // Pips
+  const pipsEl = document.getElementById('magnet-pips');
+  pipsEl.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'pip' + (i <= magnetLevel ? ' on' : '');
+    pipsEl.appendChild(pip);
+  }
+
+  // Upgrade
+  const upgBtn  = document.getElementById('btn-magnet-upg');
+  const upgCost = document.getElementById('magnet-upg-cost');
+  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) {
+    upgBtn.disabled = true; upgCost.textContent = 'Max!';
+  } else {
+    upgBtn.disabled     = coins < MAGNET_UPGRADE_COSTS[magnetLevel];
+    upgCost.textContent = `🪙 ${MAGNET_UPGRADE_COSTS[magnetLevel]}`;
+  }
+
+  document.getElementById('btn-clear').disabled = coins < 50;
+}
+
+function updateMagnetCooldownLabel() {
+  const cdEl = document.getElementById('magnet-cd');
+  if (magnetActive) {
+    const rem = Math.ceil((magnetEnd - Date.now()) / 1000);
+    cdEl.textContent = `🧲 Active: ${rem}s`;
+    cdEl.style.color = '#44aaff';
+  } else if (magnetCooldownEnd > Date.now()) {
+    const rem = Math.ceil((magnetCooldownEnd - Date.now()) / 1000);
+    cdEl.textContent = `Cooldown: ${rem}s`;
+    cdEl.style.color = '#446688';
+  } else {
+    cdEl.textContent = 'Ready!';
+    cdEl.style.color = '#44cc88';
+  }
 }
 
 // ─── Input ────────────────────────────────────────────────────────────────────
-
 canvas.addEventListener('click', e => {
   const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left;
-  const my = e.clientY - rect.top;
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
 
-  // Trash zone (only when something is selected)
-  if (selectedItem && mx >= TRASH_X && my >= TRASH_Y) {
-    discardSelected();
+  if (gameOver) {
+    // Restart button check
+    const bx = W / 2 - 75, by = H / 2 + 50;
+    if (mx >= bx && mx <= bx + 150 && my >= by && my <= by + 44) restartGame();
     return;
   }
 
+  // Trash zone
+  if (selectedItem && mx >= TRASH_X && my >= TRASH_Y) { discardSelected(); return; }
+
   const hit = getItemAt(mx, my);
   if (hit && hit.scale >= 0.85) {
-    // Wanted item → serve it
     if (orders.some(o => o.type === hit.type)) {
       if (tryAutoServe(hit.type)) {
         spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
@@ -482,76 +572,70 @@ canvas.addEventListener('click', e => {
       }
       return;
     }
-    // Not wanted → select for trash (toggle)
     selectedItem = (hit === selectedItem) ? null : hit;
     return;
   }
 
-  // Click empty arena
   selectedItem = null;
   if (my > ARENA_TOP) spawnPickle(mx, my);
 });
 
 // ─── Update ───────────────────────────────────────────────────────────────────
-
 function update() {
-  if (magnetActive && Date.now() > magnetEnd) magnetActive = false;
+  if (gameOver) return;
 
-  // Physics
+  if (magnetActive && Date.now() > magnetEnd) {
+    magnetActive = false;
+    updateUI();
+  }
+
+  tickOrders();
+
+  const pullStrength = magnetActive ? MAGNET_LEVELS[magnetLevel].pull : 0.025;
+  const pullRange    = magnetActive ? 500 : 200;
+
   for (const it of items) {
     if (it.scale < 1) it.scale = Math.min(1, it.scale + 0.07);
     if (it.glowTimer > 0) it.glowTimer--;
 
-    // Random micro-drift
-    if (Math.random() < 0.03) {
-      it.vx += (Math.random() - 0.5) * 0.2;
-      it.vy += (Math.random() - 0.5) * 0.2;
+    // Micro-drift
+    if (Math.random() < 0.025) {
+      it.vx += (Math.random() - 0.5) * 0.18;
+      it.vy += (Math.random() - 0.5) * 0.18;
     }
 
-    // Always attract same-type items toward each other.
-    // Magnet power-up doubles the pull range and strength.
-    const pullRange    = magnetActive ? 400 : 200;
-    const pullStrength = magnetActive ? 0.06 : 0.025;
+    // Attract same-type items
     for (const other of items) {
       if (other === it || other.type !== it.type) continue;
       const dx = other.x - it.x, dy = other.y - it.y;
       const d  = Math.sqrt(dx * dx + dy * dy);
       if (d > 0 && d < pullRange) {
         const f = pullStrength / d;
-        it.vx += dx * f;
-        it.vy += dy * f;
+        it.vx += dx * f; it.vy += dy * f;
       }
     }
 
-    it.vx *= 0.97;
-    it.vy *= 0.97;
-
+    it.vx *= 0.97; it.vy *= 0.97;
     const spd = Math.sqrt(it.vx ** 2 + it.vy ** 2);
-    if (spd > 1.6) { it.vx = it.vx / spd * 1.6; it.vy = it.vy / spd * 1.6; }
+    if (spd > 1.8) { it.vx = it.vx / spd * 1.8; it.vy = it.vy / spd * 1.8; }
 
-    it.x += it.vx;
-    it.y += it.vy;
-
-    if (it.x - it.radius < 0)         { it.x = it.radius;         it.vx =  Math.abs(it.vx); }
-    if (it.x + it.radius > W)         { it.x = W - it.radius;     it.vx = -Math.abs(it.vx); }
-    if (it.y - it.radius < ARENA_TOP) { it.y = ARENA_TOP + it.radius; it.vy = Math.abs(it.vy); }
-    if (it.y + it.radius > H)         { it.y = H - it.radius;     it.vy = -Math.abs(it.vy); }
+    it.x += it.vx; it.y += it.vy;
+    if (it.x - it.radius < 0)          { it.x = it.radius;          it.vx =  Math.abs(it.vx); }
+    if (it.x + it.radius > W)          { it.x = W - it.radius;      it.vx = -Math.abs(it.vx); }
+    if (it.y - it.radius < ARENA_TOP)  { it.y = ARENA_TOP + it.radius; it.vy = Math.abs(it.vy); }
+    if (it.y + it.radius > H)          { it.y = H - it.radius;      it.vy = -Math.abs(it.vy); }
   }
 
-  // Separation — push overlapping items apart, leaving a small gap so
-  // the merge check (which fires at touching distance) always wins.
+  // Separation (different-type items only)
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       const a = items[i], b = items[j];
+      if (a.type === b.type && a.scale >= 0.85 && b.scale >= 0.85) continue;
       const dx = b.x - a.x, dy = b.y - a.y;
       const d  = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      // Only separate different-type items (or items still scaling in).
-      // Same-type items that overlap get merged below — don't push them away.
-      const sameType = a.type === b.type && a.scale >= 0.85 && b.scale >= 0.85;
-      const sepMin = sameType ? 0 : a.radius + b.radius;
-      if (d < sepMin) {
-        const push = (sepMin - d) / 2;
-        const nx = dx / d, ny = dy / d;
+      const min = a.radius + b.radius;
+      if (d < min) {
+        const push = (min - d) / 2, nx = dx / d, ny = dy / d;
         a.x -= nx * push; a.y -= ny * push;
         b.x += nx * push; b.y += ny * push;
         const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
@@ -563,8 +647,7 @@ function update() {
     }
   }
 
-  // Merge detection — runs after separation so positions are settled.
-  // Same-type items that are touching (or overlapping) merge immediately.
+  // Merge detection
   const merged = new Set();
   for (let i = 0; i < items.length; i++) {
     if (merged.has(items[i].id)) continue;
@@ -574,9 +657,7 @@ function update() {
       if (a.type !== b.type) continue;
       if (a.scale < 0.85 || b.scale < 0.85) continue;
       const dx = b.x - a.x, dy = b.y - a.y;
-      // +4px buffer — items touching are guaranteed to be within range
-      const threshold = a.radius + b.radius + 4;
-      if (dx * dx + dy * dy <= threshold * threshold) {
+      if (dx * dx + dy * dy <= (a.radius + b.radius + 4) ** 2) {
         merged.add(a.id); merged.add(b.id);
         mergeItems(a, b);
         break;
@@ -587,23 +668,19 @@ function update() {
   // Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx; p.y += p.vy;
-    p.vx *= 0.91; p.vy *= 0.91;
-    p.life -= 0.035;
+    p.x += p.vx; p.y += p.vy; p.vx *= 0.91; p.vy *= 0.91; p.life -= 0.035;
     if (p.life <= 0) particles.splice(i, 1);
   }
 
   // Popups
   for (let i = popups.length - 1; i >= 0; i--) {
     const p = popups[i];
-    p.y += p.vy;
-    p.life -= 0.018;
+    p.y += p.vy; p.life -= 0.018;
     if (p.life <= 0) popups.splice(i, 1);
   }
 }
 
-// ─── Draw ─────────────────────────────────────────────────────────────────────
-
+// ─── Draw helpers ─────────────────────────────────────────────────────────────
 function roundRect(x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
@@ -614,218 +691,206 @@ function roundRect(x, y, w, h, r) {
   ctx.closePath();
 }
 
+// ─── Draw orders strip ────────────────────────────────────────────────────────
 function drawOrders() {
-  // Strip background
+  const now   = Date.now();
   ctx.fillStyle = '#140700';
   ctx.fillRect(0, 0, W, ORDER_H);
-  ctx.strokeStyle = '#2a1200';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#2a1200'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, ORDER_H); ctx.lineTo(W, ORDER_H); ctx.stroke();
 
   const slots = maxOrderSlots();
   const slotW = W / slots;
 
   for (let i = 0; i < slots; i++) {
-    const sx  = i * slotW + 10;
-    const sw  = slotW - 20;
+    const sx = i * slotW + 10, sw = slotW - 20;
 
     if (i < orders.length) {
-      const o = orders[i];
-      const f = freshness(o);
+      const o    = orders[i];
+      const f    = freshness(o);
+      const frac = Math.max(0, (o.deadline - now) / o.duration);
+      const urgent = frac < 0.2;
 
-      // Card
-      ctx.fillStyle   = 'rgba(255,136,0,0.07)';
-      ctx.strokeStyle = f.stars === 1 ? '#6b1a00' : '#3a1800';
-      ctx.lineWidth   = 1;
-      roundRect(sx, 6, sw, ORDER_H - 14, 7);
-      ctx.fill(); ctx.stroke();
+      ctx.fillStyle   = urgent ? 'rgba(180,20,0,0.2)' : 'rgba(255,136,0,0.07)';
+      ctx.strokeStyle = urgent ? '#771100' : '#3a1800';
+      ctx.lineWidth = 1;
+      roundRect(sx, 5, sw, ORDER_H - 12, 7); ctx.fill(); ctx.stroke();
 
-      // Customer emoji
+      // Customer → item
+      ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(o.customer, sx + sw * 0.22, 33);
+      ctx.fillStyle = '#553311'; ctx.font = '9px sans-serif';
+      ctx.fillText('wants', sx + sw * 0.5, 26);
+      ctx.fillStyle = '#553311'; ctx.font = '13px sans-serif';
+      ctx.fillText('›', sx + sw * 0.5, 37);
       ctx.font = '22px serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(o.customer, sx + sw * 0.22, 36);
-
-      // "wants"
-      ctx.fillStyle = '#5a3311';
-      ctx.font = '9px sans-serif';
-      ctx.fillText('wants', sx + sw * 0.5, 28);
-
-      // Arrow
-      ctx.fillStyle = '#5a3311';
-      ctx.font = '14px sans-serif';
-      ctx.fillText('›', sx + sw * 0.5, 40);
-
-      // Item emoji
-      ctx.font = '26px serif';
-      ctx.fillText(ITEMS[o.type].emoji, sx + sw * 0.78, 36);
+      ctx.fillText(ITEMS[o.type].emoji, sx + sw * 0.78, 33);
 
       // Freshness stars
-      const stars = '⭐'.repeat(f.stars) + '☆'.repeat(3 - f.stars);
-      ctx.font = '11px sans-serif';
-      ctx.fillStyle = f.color;
-      ctx.fillText(stars, sx + sw / 2, 64);
+      ctx.fillStyle = f.color; ctx.font = '10px sans-serif';
+      ctx.fillText('⭐'.repeat(f.stars) + '☆'.repeat(3 - f.stars), sx + sw / 2, 56);
 
-      // Label
-      ctx.font = '9px sans-serif';
-      ctx.fillStyle = f.color;
-      ctx.fillText(f.label, sx + sw / 2, 80);
+      // Timer bar
+      const barX = sx + 5, barY = 66, barW = sw - 10, barH = 7;
+      ctx.fillStyle = '#1a0800'; roundRect(barX, barY, barW, barH, 3); ctx.fill();
+      const col = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
+      ctx.fillStyle = col;
+      if (frac > 0) { roundRect(barX, barY, barW * frac, barH, 3); ctx.fill(); }
 
-      // Value preview
-      ctx.fillStyle = '#665522';
-      ctx.font = '9px sans-serif';
-      ctx.fillText(`${ITEMS[o.type].value * f.mult} pts`, sx + sw / 2, 96);
+      // Time remaining (only show when < 30s)
+      const secLeft = Math.ceil((o.deadline - now) / 1000);
+      if (secLeft <= 30) {
+        ctx.fillStyle = urgent ? '#ff4422' : '#886644';
+        ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(`${secLeft}s`, sx + sw / 2, 84);
+      }
 
     } else {
-      // Empty slot
       ctx.fillStyle   = 'rgba(255,255,255,0.02)';
-      ctx.strokeStyle = '#1a0900';
-      ctx.lineWidth = 1;
-      roundRect(sx, 6, sw, ORDER_H - 14, 7);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#2a1400';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(ordersServed < 3 ? `Unlocks at 3 serves` : 'Incoming…', sx + sw / 2, ORDER_H / 2 - 4);
+      ctx.strokeStyle = '#1a0900'; ctx.lineWidth = 1;
+      roundRect(sx, 5, sw, ORDER_H - 12, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#2a1400'; ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(ordersServed < 3 ? 'Serve 3 to unlock' : 'Incoming…', sx + sw / 2, ORDER_H / 2 - 4);
     }
   }
 
-  // Magnet indicator
+  // Magnet active indicator
   if (magnetActive) {
     const rem = Math.ceil((magnetEnd - Date.now()) / 1000);
-    ctx.fillStyle = '#44aaff';
-    ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#44aaff'; ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
     ctx.fillText(`🧲 ${rem}s`, W - 8, 4);
   }
 }
 
+// ─── Draw arena ───────────────────────────────────────────────────────────────
 function drawArena() {
-  // Subtle grid
-  ctx.strokeStyle = 'rgba(255,80,0,0.03)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,80,0,0.03)'; ctx.lineWidth = 1;
   for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, ARENA_TOP); ctx.lineTo(x, H); ctx.stroke(); }
   for (let y = ARENA_TOP; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-  // Trash zone
+  // Magnet field visualisation when active
+  if (magnetActive) {
+    const frac = (magnetEnd - Date.now()) / 30000;
+    ctx.fillStyle = `rgba(30,100,200,${0.04 * frac})`;
+    ctx.fillRect(0, ARENA_TOP, W, H - ARENA_TOP);
+  }
+
   const trashLit = selectedItem !== null;
   ctx.fillStyle   = trashLit ? 'rgba(255,60,0,0.22)' : 'rgba(60,15,0,0.5)';
   ctx.strokeStyle = trashLit ? '#ff5500' : '#331100';
   ctx.lineWidth   = trashLit ? 2 : 1;
-  roundRect(TRASH_X, TRASH_Y, TRASH_SIZE, TRASH_SIZE, 8);
-  ctx.fill(); ctx.stroke();
-
-  ctx.font = '26px serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  roundRect(TRASH_X, TRASH_Y, TRASH_SIZE, TRASH_SIZE, 8); ctx.fill(); ctx.stroke();
+  ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText('🗑️', TRASH_X + TRASH_SIZE / 2, TRASH_Y + TRASH_SIZE / 2);
-
   if (trashLit) {
-    ctx.fillStyle = '#ff7755';
-    ctx.font = '8px sans-serif';
+    ctx.fillStyle = '#ff7755'; ctx.font = '8px sans-serif';
     ctx.fillText('TRASH', TRASH_X + TRASH_SIZE / 2, TRASH_Y + TRASH_SIZE - 8);
   }
 }
 
+// ─── Draw items ───────────────────────────────────────────────────────────────
 function drawItems() {
-  // Particles (behind items)
   for (const p of particles) {
     ctx.globalAlpha = p.life * 0.9;
-    ctx.font = `${p.size}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = `${p.size}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(p.emoji, p.x, p.y);
   }
   ctx.globalAlpha = 1;
 
-  // Items
   for (const it of items) {
-    const isSel     = it === selectedItem;
-    const wantedIdx = orders.findIndex(o => o.type === it.type);
-    const isWanted  = wantedIdx !== -1;
-    const f         = isWanted ? freshness(orders[wantedIdx]) : null;
+    const isSel    = it === selectedItem;
+    const orderIdx = orders.findIndex(o => o.type === it.type);
+    const isWanted = orderIdx !== -1;
+    const f        = isWanted ? freshness(orders[orderIdx]) : null;
 
     ctx.save();
     ctx.translate(it.x, it.y);
     ctx.scale(it.scale, it.scale);
 
-    // Shadow / glow
-    if (isSel)              { ctx.shadowColor = '#ff5500'; ctx.shadowBlur = 22; }
-    else if (it.glowTimer > 0) { ctx.shadowColor = '#ffdd00'; ctx.shadowBlur = 14 + it.glowTimer * 0.3; }
-    else if (isWanted)      { ctx.shadowColor = f.color;   ctx.shadowBlur = 12; }
+    if (isSel)             { ctx.shadowColor = '#ff5500'; ctx.shadowBlur = 22; }
+    else if (it.glowTimer) { ctx.shadowColor = '#ffdd00'; ctx.shadowBlur = 14 + it.glowTimer * 0.3; }
+    else if (isWanted)     { ctx.shadowColor = f.color;   ctx.shadowBlur = 12; }
+    else if (magnetActive) { ctx.shadowColor = '#2266ff'; ctx.shadowBlur = 6; }
 
-    // Circle background
-    ctx.beginPath();
-    ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
-    const g = ctx.createRadialGradient(-it.radius * 0.3, -it.radius * 0.3, it.radius * 0.1, 0, 0, it.radius);
-    g.addColorStop(0, 'rgba(255,255,255,0.13)');
+    ctx.beginPath(); ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(-it.radius*.28, -it.radius*.28, it.radius*.1, 0, 0, it.radius);
+    g.addColorStop(0, 'rgba(255,255,255,0.14)');
     g.addColorStop(1, 'rgba(0,0,0,0.42)');
-    ctx.fillStyle = g;
-    ctx.fill();
-
-    ctx.strokeStyle = isSel ? '#ff6600' : isWanted ? f.color : 'rgba(255,160,60,0.25)';
+    ctx.fillStyle = g; ctx.fill();
+    ctx.strokeStyle = isSel ? '#ff6600' : isWanted ? f.color : magnetActive ? '#2255cc' : 'rgba(255,160,60,0.22)';
     ctx.lineWidth   = isSel || isWanted ? 2.5 : 1.5;
-    ctx.stroke();
-    ctx.shadowBlur  = 0;
+    ctx.stroke(); ctx.shadowBlur = 0;
 
-    // Emoji
-    ctx.font = `${it.radius * 1.1}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    ctx.font = `${it.radius * 1.1}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(ITEMS[it.type].emoji, 0, 2);
 
-    // Pulsing ring if selected
     if (isSel) {
       const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 140);
       ctx.strokeStyle = `rgba(255,85,0,${0.3 + 0.3 * pulse})`;
-      ctx.lineWidth   = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, it.radius + 7, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(0, 0, it.radius + 7, 0, Math.PI * 2); ctx.stroke();
     }
 
-    // Small "wanted" indicator
     if (isWanted && !isSel) {
-      ctx.fillStyle = f.color;
-      ctx.font = `${it.radius * 0.38}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.fillText('▲', 0, -it.radius * 0.62);
+      ctx.fillStyle = f.color; ctx.font = `${it.radius * 0.38}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText('▲', 0, -it.radius * 0.6);
     }
 
     ctx.restore();
   }
 
-  // Popups
   for (const p of popups) {
     ctx.globalAlpha = p.life;
-    ctx.fillStyle   = '#ffdd44';
-    ctx.font        = 'bold 15px sans-serif';
-    ctx.textAlign   = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#000';
-    ctx.shadowBlur  = 4;
-    ctx.fillText(p.text, p.x, p.y);
-    ctx.shadowBlur  = 0;
+    ctx.fillStyle = '#ffdd44'; ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+    ctx.fillText(p.text, p.x, p.y); ctx.shadowBlur = 0;
   }
   ctx.globalAlpha = 1;
 }
 
-// ─── Main loop ────────────────────────────────────────────────────────────────
+// ─── Draw game over ───────────────────────────────────────────────────────────
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
+  ctx.font = 'bold 38px sans-serif'; ctx.fillStyle = '#ff4422';
+  ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20;
+  ctx.fillText('CLOSED! 🍔', W / 2, H / 2 - 80);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '20px sans-serif'; ctx.fillStyle = '#ffcc44';
+  ctx.fillText(`Final Score: ${score.toLocaleString()}`, W / 2, H / 2 - 30);
+  ctx.fillStyle = '#aa8833'; ctx.font = '15px sans-serif';
+  ctx.fillText(`Best: ${best.toLocaleString()}`, W / 2, H / 2 + 5);
+  ctx.fillStyle = '#885522';
+  ctx.fillText(`Orders served: ${ordersServed}`, W / 2, H / 2 + 28);
+
+  const bx = W / 2 - 75, by = H / 2 + 50;
+  ctx.fillStyle = '#cc4400'; ctx.strokeStyle = '#ff8800'; ctx.lineWidth = 2;
+  roundRect(bx, by, 150, 44, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 15px sans-serif';
+  ctx.fillText('Open Again! 🔓', W / 2, by + 22);
+}
+
+// ─── Main loop ────────────────────────────────────────────────────────────────
 function loop() {
   update();
+  updateMagnetCooldownLabel();
   ctx.clearRect(0, 0, W, H);
   drawOrders();
   drawArena();
   drawItems();
+  if (gameOver) drawGameOver();
   requestAnimationFrame(loop);
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-
+buildChainList();
 updateUI();
 spawnOrder();
 loop();
