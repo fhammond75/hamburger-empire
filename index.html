@@ -176,8 +176,11 @@ const ITEMS = [
 
 const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕','👲'];
 
-const FRESH_MS = 30000;
-const WARM_MS  = 65000;
+// Order timer: 3-star window (30s) → 2-star window (20s) → 1-star window (10s) → fail
+const STAR3_MS = 30000;  // first 30s: 3 stars
+const STAR2_MS = 20000;  // next 20s:  2 stars
+const STAR1_MS = 10000;  // final 10s: 1 star → then life lost
+const ORDER_TOTAL_MS = STAR3_MS + STAR2_MS + STAR1_MS; // 60s total
 
 // ─── Auto-dropper: two independent incremental upgrade tracks ─────────────────
 // Speed: unlock at 50 coins → 10s interval; each speed upgrade costs more and
@@ -280,8 +283,8 @@ function maxOrderSlots() { return ordersServed >= 3 ? 2 : 1; }
 function maxOrderTier()  { return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4)); }
 
 function orderDuration(types) {
-  const base = types.reduce((sum, t) => sum + Math.max(45000, (90 - t * 4) * 1000), 0);
-  return base / (1 + Math.floor(ordersServed / 5) * 0.06);
+  // Combo orders get +15s to account for needing multiple items
+  return ORDER_TOTAL_MS + (types.length > 1 ? 15000 : 0);
 }
 
 // Predefined combo templates (types to ask for together)
@@ -342,9 +345,9 @@ function tickOrders() {
 
 function freshness(order) {
   const age = Date.now() - order.createdAt;
-  if (age < FRESH_MS) return { stars: 3, label: 'Fresh!',       mult: 3, color: '#44dd66' };
-  if (age < WARM_MS)  return { stars: 2, label: 'Getting cold', mult: 2, color: '#ffaa22' };
-  return                     { stars: 1, label: 'Cold…',        mult: 1, color: '#cc4422' };
+  if (age < STAR3_MS)                  return { stars: 3, mult: 3, color: '#44dd66' };
+  if (age < STAR3_MS + STAR2_MS)       return { stars: 2, mult: 2, color: '#ffaa22' };
+  return                                      { stars: 1, mult: 1, color: '#cc4422' };
 }
 
 // Try to serve an item of `itemType` against active orders.
@@ -859,10 +862,16 @@ function drawOrders() {
     const sx = si * slotW + 8, sw = slotW - 16;
 
     if (si < orders.length) {
-      const o    = orders[si];
-      const f    = freshness(o);
-      const frac = Math.max(0, (o.deadline - now) / o.duration);
-      const urgent = frac < 0.2;
+      const o   = orders[si];
+      const f   = freshness(o);
+      const age = now - o.createdAt;
+      // Fraction remaining within the CURRENT star window (bar resets each star drop)
+      let windowStart, windowLen;
+      if (f.stars === 3)      { windowStart = 0;                      windowLen = STAR3_MS; }
+      else if (f.stars === 2) { windowStart = STAR3_MS;               windowLen = STAR2_MS; }
+      else                    { windowStart = STAR3_MS + STAR2_MS;    windowLen = STAR1_MS; }
+      const frac   = Math.max(0, 1 - (age - windowStart) / windowLen);
+      const urgent = f.stars === 1;
 
       // Card background
       ctx.fillStyle   = urgent ? 'rgba(200,30,0,0.85)' : 'rgba(255,210,140,0.82)';
@@ -937,8 +946,9 @@ function drawOrders() {
         ctx.fillStyle = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
         rr(bx,by,bw*frac,bh,3); ctx.fill();
       }
-      // Seconds remaining — always visible above timer bar
-      const sec = Math.ceil((o.deadline-now)/1000);
+      // Seconds until next star drop (or expiry if on last star)
+      const windowEndsAt = o.createdAt + windowStart + windowLen;
+      const sec = Math.max(0, Math.ceil((windowEndsAt - now) / 1000));
       ctx.fillStyle = urgent ? '#ff4422' : '#442200';
       ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(`${sec}s`, sx+sw/2, ORDER_H-9);
