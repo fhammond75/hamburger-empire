@@ -101,11 +101,21 @@
   <div class="panel">
     <h2>🥒 Auto Dropper</h2>
     <div id="autodrop-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">Off</div>
-    <button class="upg-btn" id="btn-autodrop" onclick="buyAutoDrop()">
-      <span id="autodrop-label">Buy Auto Drop</span>
-      <span class="cost" id="autodrop-cost">🪙 40</span>
+    <button class="upg-btn" id="btn-autodrop-unlock" onclick="buyAutoDropUnlock()">
+      <span id="autodrop-unlock-label">Unlock Auto Drop</span>
+      <span class="cost" id="autodrop-unlock-cost">🪙 50</span>
     </button>
-    <div id="lucky-pct" style="font-size:0.72rem;color:#448844;margin-top:6px">🍀 Lucky drop: 0%</div>
+    <button class="upg-btn" id="btn-autodrop-speed" onclick="buyAutoDropSpeed()" style="margin-top:4px">
+      <span id="autodrop-speed-label">⚡ Speed +0.5s faster</span>
+      <span class="cost" id="autodrop-speed-cost">🪙 20</span>
+    </button>
+    <div style="margin-top:8px;border-top:1px solid #5c3010;padding-top:6px">
+      <div id="lucky-info" style="font-size:0.75rem;color:#448844;margin-bottom:4px">🍀 Lucky drop: 0%</div>
+      <button class="upg-btn" id="btn-lucky" onclick="buyLucky()">
+        <span id="lucky-label">🍀 +3% Lucky Chance</span>
+        <span class="cost" id="lucky-cost">🪙 30</span>
+      </button>
+    </div>
   </div>
 
   <div class="panel">
@@ -169,9 +179,21 @@ const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕
 const FRESH_MS = 30000;
 const WARM_MS  = 65000;
 
-// ─── Upgrade tables ───────────────────────────────────────────────────────────
-const AUTO_DROP_INTERVALS = [6000, 4000, 2000];
-const AUTO_DROP_COSTS     = [40, 100, 250];
+// ─── Auto-dropper: two independent incremental upgrade tracks ─────────────────
+// Speed: unlock at 50 coins → 10s interval; each speed upgrade costs more and
+//        reduces interval by 0.5s, capped at 3s (14 upgrades possible)
+const AUTO_DROP_UNLOCK_COST = 50;
+const AUTO_DROP_BASE_MS     = 10000;
+const AUTO_DROP_STEP_MS     = 500;
+const AUTO_DROP_MIN_MS      = 3000;
+function autoDropSpeedCost(n) { return Math.floor(20 * Math.pow(1.35, n)); }
+function autoDropInterval()   { return Math.max(AUTO_DROP_MIN_MS, AUTO_DROP_BASE_MS - autoDropSpeedLevel * AUTO_DROP_STEP_MS); }
+
+// Lucky: separate track; each upgrade adds +3% chance, cap 45%
+const LUCKY_STEP_PCT = 3;
+const LUCKY_CAP_PCT  = 45;
+function luckyUpgradeCost(n) { return Math.floor(30 * Math.pow(1.4, n)); }
+function currentLuckyPct()   { return Math.min(LUCKY_CAP_PCT, luckyLevel * LUCKY_STEP_PCT); }
 const EXPAND_COSTS        = [30, 80, 200, 500];
 
 const MAGNET_LEVELS = [
@@ -202,8 +224,10 @@ let magnetActive      = false;
 let magnetEnd         = 0;
 let magnetCooldownEnd = 0;
 
-let autoDropLevel  = 0;
-let autoDropLastMs = 0;
+let autoDropUnlocked  = false;
+let autoDropSpeedLevel = 0;
+let luckyLevel         = 0;
+let autoDropLastMs     = 0;
 
 const soldCounts = new Array(ITEMS.length).fill(0);
 
@@ -417,15 +441,15 @@ function getItemAt(x, y) {
 }
 
 function getLuckyDropType() {
-  if (highestMerge === 0) return 0;
-  const chance = Math.min(0.70, highestMerge * 0.10);
-  if (Math.random() > chance) return 0;
+  if (highestMerge === 0 || currentLuckyPct() === 0) return 0;
+  if (Math.random() * 100 > currentLuckyPct()) return 0;
+  // Always weight heavily toward lower tiers (1/t weighting)
   const weights = [];
   for (let t = 1; t <= highestMerge; t++) weights.push(1 / t);
   const total = weights.reduce((a, b) => a + b, 0);
   let r = Math.random() * total;
   for (let t = 1; t <= highestMerge; t++) { r -= weights[t - 1]; if (r <= 0) return t; }
-  return highestMerge;
+  return 1;
 }
 
 function spawnItem(x, y, forceType) {
@@ -519,11 +543,31 @@ function upgradeMagnet() {
 }
 
 // ─── Upgrades ─────────────────────────────────────────────────────────────────
-function buyAutoDrop() {
-  if (autoDropLevel >= AUTO_DROP_COSTS.length || coins < AUTO_DROP_COSTS[autoDropLevel]) return;
-  coins -= AUTO_DROP_COSTS[autoDropLevel];
-  autoDropLevel++;
+function buyAutoDropUnlock() {
+  if (autoDropUnlocked || coins < AUTO_DROP_UNLOCK_COST) return;
+  coins -= AUTO_DROP_UNLOCK_COST;
+  autoDropUnlocked = true;
   autoDropLastMs = Date.now();
+  updateUI();
+}
+
+function buyAutoDropSpeed() {
+  if (!autoDropUnlocked) return;
+  const atMax = autoDropInterval() <= AUTO_DROP_MIN_MS;
+  if (atMax) return;
+  const cost = autoDropSpeedCost(autoDropSpeedLevel);
+  if (coins < cost) return;
+  coins -= cost;
+  autoDropSpeedLevel++;
+  updateUI();
+}
+
+function buyLucky() {
+  if (currentLuckyPct() >= LUCKY_CAP_PCT) return;
+  const cost = luckyUpgradeCost(luckyLevel);
+  if (coins < cost) return;
+  coins -= cost;
+  luckyLevel++;
   updateUI();
 }
 
@@ -556,7 +600,7 @@ function restartGame() {
   score = 0; coins = 0; hearts = 3; ordersServed = 0;
   maxItems = 12; expandLevel = 0; highestMerge = 0;
   magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
-  autoDropLevel = 0; autoDropLastMs = 0;
+  autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
   soldCounts.fill(0);
   selectedItem = null; gameOver = false;
   items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
@@ -598,21 +642,35 @@ function updateUI() {
   if (expandLevel >= EXPAND_COSTS.length) { eb.disabled = true; ec.textContent = 'Max!'; }
   else { eb.disabled = coins < EXPAND_COSTS[expandLevel]; ec.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`; }
 
-  // Auto drop
-  const adb = document.getElementById('btn-autodrop'), adc = document.getElementById('autodrop-cost');
-  const adl = document.getElementById('autodrop-label'), adi = document.getElementById('autodrop-info');
-  if (autoDropLevel >= AUTO_DROP_COSTS.length) {
-    adb.disabled = true; adc.textContent = 'Max!'; adl.textContent = 'Auto Drop';
-  } else {
-    adb.disabled = coins < AUTO_DROP_COSTS[autoDropLevel];
-    adc.textContent = `🪙 ${AUTO_DROP_COSTS[autoDropLevel]}`;
-    adl.textContent = autoDropLevel === 0 ? 'Buy Auto Drop' : `Upgrade (Lv ${autoDropLevel}→${autoDropLevel+1})`;
-  }
-  adi.textContent = autoDropLevel > 0
-    ? `Every ${AUTO_DROP_INTERVALS[autoDropLevel-1]/1000}s · Lv ${autoDropLevel}/3`
+  // Auto drop — unlock button
+  const adUnlockBtn  = document.getElementById('btn-autodrop-unlock');
+  adUnlockBtn.disabled = autoDropUnlocked || coins < AUTO_DROP_UNLOCK_COST;
+  document.getElementById('autodrop-unlock-label').textContent = autoDropUnlocked ? '✔ Unlocked' : 'Unlock Auto Drop';
+  document.getElementById('autodrop-unlock-cost').textContent  = autoDropUnlocked ? '' : `🪙 ${AUTO_DROP_UNLOCK_COST}`;
+
+  // Auto drop — speed button
+  const atSpeedMax = autoDropInterval() <= AUTO_DROP_MIN_MS;
+  const speedCost  = autoDropSpeedCost(autoDropSpeedLevel);
+  const adSpeedBtn = document.getElementById('btn-autodrop-speed');
+  adSpeedBtn.disabled = !autoDropUnlocked || atSpeedMax || coins < speedCost;
+  document.getElementById('autodrop-speed-label').textContent =
+    atSpeedMax ? '⚡ Max Speed!' : `⚡ +0.5s faster (Lv ${autoDropSpeedLevel})`;
+  document.getElementById('autodrop-speed-cost').textContent =
+    atSpeedMax ? '' : `🪙 ${speedCost}`;
+
+  document.getElementById('autodrop-info').textContent = autoDropUnlocked
+    ? `Every ${(autoDropInterval()/1000).toFixed(1)}s · Speed Lv ${autoDropSpeedLevel}`
     : 'Off';
-  document.getElementById('lucky-pct').textContent =
-    `🍀 Lucky drop: ${Math.min(70, highestMerge * 10)}%`;
+
+  // Lucky upgrades
+  const luckyAtMax  = currentLuckyPct() >= LUCKY_CAP_PCT;
+  const luckyCost   = luckyUpgradeCost(luckyLevel);
+  const luckyBtn    = document.getElementById('btn-lucky');
+  luckyBtn.disabled = luckyAtMax || coins < luckyCost;
+  document.getElementById('lucky-label').textContent =
+    luckyAtMax ? '🍀 Max Lucky!' : `🍀 +${LUCKY_STEP_PCT}% Lucky (Lv ${luckyLevel})`;
+  document.getElementById('lucky-cost').textContent  = luckyAtMax ? '' : `🪙 ${luckyCost}`;
+  document.getElementById('lucky-info').textContent  = `🍀 Lucky drop: ${currentLuckyPct()}%`;
 
   // Magnet
   const lvl  = MAGNET_LEVELS[magnetLevel];
@@ -693,9 +751,8 @@ function update() {
   }
 
   // Auto-dropper
-  if (autoDropLevel > 0 && items.length < maxItems) {
-    const interval = AUTO_DROP_INTERVALS[autoDropLevel - 1];
-    if (Date.now() - autoDropLastMs >= interval) {
+  if (autoDropUnlocked && items.length < maxItems) {
+    if (Date.now() - autoDropLastMs >= autoDropInterval()) {
       autoDropLastMs = Date.now();
       const type = getLuckyDropType();
       const r    = ITEMS[type].radius;
