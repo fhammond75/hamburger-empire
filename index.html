@@ -19,6 +19,7 @@
               display: block; box-shadow: 0 0 28px #ff440033; cursor: crosshair; }
     #hint { color: #664422; font-size: 0.78rem; }
 
+    #left-panel { width: 180px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
     #sidebar { width: 215px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
     .panel { background: #1e0c00; border: 1px solid #8b4400; border-radius: 8px; padding: 11px; }
     .panel h2 { font-size: 0.75rem; color: #ffcc44; text-transform: uppercase;
@@ -46,12 +47,6 @@
     .upg-btn:disabled { opacity: 0.3; cursor: default; }
     .upg-btn .cost { color: #ccaa00; font-size: 0.7rem; }
 
-    #magnet-power-row { display: flex; align-items: center; justify-content: space-between;
-                        margin-bottom: 6px; font-size: 0.78rem; color: #aaddff; }
-    #magnet-pips { display: flex; gap: 3px; }
-    .pip { width: 10px; height: 10px; border-radius: 2px; border: 1px solid #4488bb; background: #0a2233; }
-    .pip.on { background: #44aaff; border-color: #88ccff; }
-    #magnet-cd { font-size: 0.7rem; color: #446688; margin-bottom: 5px; min-height: 14px; }
 
     #chain-list { display: flex; flex-direction: column; gap: 2px; }
     .chain-row { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; padding: 2px 0; }
@@ -65,13 +60,7 @@
 </head>
 <body>
 
-<div id="game-wrap">
-  <h1>🍔 Hamburger Empire</h1>
-  <canvas id="canvas" width="560" height="680"></canvas>
-  <div id="hint">Click arena → drop ingredient &nbsp;·&nbsp; Items auto-serve matched orders &nbsp;·&nbsp; Click non-order item → select, then 🗑</div>
-</div>
-
-<div id="sidebar">
+<div id="left-panel">
   <div class="panel">
     <h2>Lives</h2>
     <div id="hearts-row">❤️❤️❤️</div>
@@ -90,6 +79,19 @@
     <div id="served-val">0 orders served</div>
   </div>
 
+  <div class="panel">
+    <h2>Merge Chain</h2>
+    <div id="chain-list"></div>
+  </div>
+</div>
+
+<div id="game-wrap">
+  <h1>🍔 Hamburger Empire</h1>
+  <canvas id="canvas" width="560" height="680"></canvas>
+  <div id="hint">Click arena → drop ingredient &nbsp;·&nbsp; Items auto-serve matched orders &nbsp;·&nbsp; Click non-order item → select, then 🗑</div>
+</div>
+
+<div id="sidebar">
   <div class="panel">
     <h2>Kitchen</h2>
     <div id="cap-row"><span id="cap-label">0 / 12</span><span id="cap-pct">0%</span></div>
@@ -136,17 +138,15 @@
   </div>
 
   <div class="panel">
-    <h2>🧲 Magnet</h2>
-    <div id="magnet-power-row">
-      <span>Power <span id="magnet-lvl">1</span></span>
-      <div id="magnet-pips"></div>
-    </div>
-    <div id="magnet-cd"></div>
-    <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-bottom:5px">
-      <span>⚡ Activate</span><span class="cost" id="magnet-effect-label">1 wave + 30s</span>
+    <h2>🧲 Emergency Magnet</h2>
+    <div id="magnet-info" style="font-size:0.72rem;color:#664422;margin-bottom:6px">2 uses max per game. Triggers 5 merge waves + 25s gravity pull.</div>
+    <div id="magnet-uses-row" style="font-size:0.85rem;color:#aaddff;margin-bottom:6px">Uses available: <strong id="magnet-uses">0</strong></div>
+    <button class="upg-btn" id="btn-magnet-buy" onclick="buyMagnet()">
+      <span id="magnet-buy-label">Buy Use #1</span>
+      <span class="cost" id="magnet-buy-cost">🪙 250</span>
     </button>
-    <button class="upg-btn" id="btn-magnet-upg" onclick="upgradeMagnet()">
-      <span>↑ Upgrade Power</span><span class="cost" id="magnet-upg-cost">🪙 60</span>
+    <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-top:4px">
+      <span>⚡ Activate</span><span class="cost" id="magnet-cd">0 ready</span>
     </button>
   </div>
 
@@ -155,11 +155,6 @@
     <button class="upg-btn" id="btn-clear" onclick="buyClear()">
       <span>Remove non-orders</span><span class="cost">🪙 50</span>
     </button>
-  </div>
-
-  <div class="panel">
-    <h2>Merge Chain</h2>
-    <div id="chain-list"></div>
   </div>
 </div>
 
@@ -216,15 +211,7 @@ function luckyUpgradeCost(n) { return Math.floor(30 * Math.pow(1.4, n)); }
 function currentLuckyPct()   { return Math.min(LUCKY_CAP_PCT, luckyLevel * LUCKY_STEP_PCT); }
 const EXPAND_COSTS        = [30, 80, 200, 500];
 
-const MAGNET_LEVELS = [
-  { waves: 1, pull: 0.08, label: '1 wave + 30s' },
-  { waves: 2, pull: 0.14, label: '2 waves + 30s' },
-  { waves: 3, pull: 0.22, label: '3 waves + 30s' },
-  { waves: 4, pull: 0.32, label: '4 waves + 30s' },
-  { waves: 5, pull: 0.45, label: '5 waves + 30s' },
-];
-const MAGNET_UPGRADE_COSTS = [60, 150, 350, 800];
-const MAGNET_CD_MS         = 30000;
+const MAGNET_COSTS = [250, 500];
 
 // ─── Recipe cards: unlock customer orders for assembled menu items ─────────────
 // Tiers 0-6 (Pickle→Patty) are raw ingredients, orderable once discovered.
@@ -250,10 +237,10 @@ let highestMerge = 0;
 let gameOver     = false;
 let selectedItem = null;
 
-let magnetLevel       = 0;
-let magnetActive      = false;
-let magnetEnd         = 0;
-let magnetCooldownEnd = 0;
+let magnetUsesLeft = 0;
+let magnetUsed     = 0;
+let magnetActive   = false;
+let magnetEnd      = 0;
 
 let autoDropUnlocked   = false;
 let autoDropSpeedLevel = 0;
@@ -329,7 +316,7 @@ function updateChainList() {
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
-function maxOrderSlots() { return ordersServed >= 3 ? 2 : 1; }
+function maxOrderSlots() { return ordersServed >= 12 ? 2 : 1; }
 function maxOrderTier() {
   if (highestMerge === 0) return 0;
   // Ingredients (0-6) are orderable once discovered
@@ -363,7 +350,7 @@ function spawnOrder() {
   if (orders.length >= maxOrderSlots() || gameOver) return;
 
   let wantTypes;
-  const canCombo = ordersServed >= 8 && Math.random() < 0.3 + Math.floor(ordersServed / 10) * 0.05;
+  const canCombo = ordersServed >= 20 && Math.random() < 0.3 + Math.floor(ordersServed / 10) * 0.05;
 
   if (canCombo) {
     // Pick a combo where all types are within discovered range
@@ -401,7 +388,7 @@ function tickOrders() {
     if (now >= orders[i].deadline) {
       orders.splice(i, 1);
       loseHeart();
-      setTimeout(spawnOrder, 2500);
+      setTimeout(spawnOrder, 6000);
     }
   }
 }
@@ -449,7 +436,7 @@ function completeOrder(order) {
   const bonus = order.isCombo ? ' COMBO!' : '';
   addPopup(W / 2, ARENA_TOP + 50, `🪙 +${earned}${bonus}`, 'coin', f.stars);
 
-  setTimeout(spawnOrder, 1400);
+  setTimeout(spawnOrder, 5000);
   updateUI();
 }
 
@@ -568,13 +555,25 @@ function mergeItems(a, b) {
 }
 
 // ─── Magnet ───────────────────────────────────────────────────────────────────
-function activateMagnet() {
-  if (magnetCooldownEnd > Date.now() || gameOver) return;
-  const lvl = MAGNET_LEVELS[magnetLevel];
+function buyMagnet() {
+  const totalBought = magnetUsed + magnetUsesLeft;
+  if (totalBought >= 2 || gameOver) return;
+  const cost = MAGNET_COSTS[totalBought];
+  if (coins < cost) return;
+  coins -= cost;
+  magnetUsesLeft++;
+  updateUI();
+}
 
-  for (let wave = 0; wave < lvl.waves; wave++) {
+function activateMagnet() {
+  if (magnetUsesLeft <= 0 || magnetActive || gameOver) return;
+  magnetUsesLeft--;
+  magnetUsed++;
+
+  // 5 waves of instant merges
+  for (let wave = 0; wave < 5; wave++) {
     const usedIds = new Set();
-    const byType  = {};
+    const byType = {};
     for (const it of items) {
       if (!byType[it.type]) byType[it.type] = [];
       byType[it.type].push(it);
@@ -583,9 +582,9 @@ function activateMagnet() {
     for (const [typeStr, group] of Object.entries(byType)) {
       if (parseInt(typeStr) >= ITEMS.length - 1) continue;
       for (let i = 0; i + 1 < group.length; i += 2) {
-        const a = group[i], b = group[i + 1];
-        if (usedIds.has(a.id) || usedIds.has(b.id)) continue;
-        if (!items.includes(a) || !items.includes(b)) continue;
+        const a = group[i], b = group[i+1];
+        if (usedIds.has(a.id)||usedIds.has(b.id)) continue;
+        if (!items.includes(a)||!items.includes(b)) continue;
         usedIds.add(a.id); usedIds.add(b.id);
         mergeItems(a, b);
         anyMerged = true;
@@ -594,16 +593,8 @@ function activateMagnet() {
     if (!anyMerged) break;
   }
 
-  magnetActive      = true;
-  magnetEnd         = Date.now() + 30000;
-  magnetCooldownEnd = Date.now() + MAGNET_CD_MS;
-  updateUI();
-}
-
-function upgradeMagnet() {
-  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length || coins < MAGNET_UPGRADE_COSTS[magnetLevel]) return;
-  coins -= MAGNET_UPGRADE_COSTS[magnetLevel];
-  magnetLevel++;
+  magnetActive = true;
+  magnetEnd    = Date.now() + 25000;
   updateUI();
 }
 
@@ -684,7 +675,7 @@ function triggerGameOver() {
 function restartGame() {
   score = 0; coins = 0; hearts = 3; ordersServed = 0;
   maxItems = 12; expandLevel = 0; highestMerge = 0;
-  magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
+  magnetUsesLeft = 0; magnetUsed = 0; magnetActive = false; magnetEnd = 0;
   autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
   unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0;
   soldCounts.fill(0);
@@ -798,37 +789,22 @@ function updateUI() {
     : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
 
   // Magnet
-  const lvl  = MAGNET_LEVELS[magnetLevel];
-  const onCd = magnetCooldownEnd > Date.now();
-  document.getElementById('magnet-lvl').textContent          = magnetLevel + 1;
-  document.getElementById('magnet-effect-label').textContent = lvl.label;
-  document.getElementById('btn-magnet').disabled             = onCd || gameOver;
-  const pipsEl = document.getElementById('magnet-pips');
-  pipsEl.innerHTML = '';
-  for (let i = 0; i < 5; i++) {
-    const p = document.createElement('div');
-    p.className = 'pip' + (i <= magnetLevel ? ' on' : '');
-    pipsEl.appendChild(p);
-  }
-  const ub = document.getElementById('btn-magnet-upg'), uc = document.getElementById('magnet-upg-cost');
-  if (magnetLevel >= MAGNET_UPGRADE_COSTS.length) { ub.disabled = true; uc.textContent = 'Max!'; }
-  else { ub.disabled = coins < MAGNET_UPGRADE_COSTS[magnetLevel]; uc.textContent = `🪙 ${MAGNET_UPGRADE_COSTS[magnetLevel]}`; }
+  const totalBought = magnetUsed + magnetUsesLeft;
+  const nextCost    = totalBought < MAGNET_COSTS.length ? MAGNET_COSTS[totalBought] : null;
+  const buyBtn      = document.getElementById('btn-magnet-buy');
+  buyBtn.disabled   = totalBought >= 2 || !nextCost || coins < nextCost || gameOver;
+  document.getElementById('magnet-buy-label').textContent = totalBought >= 2 ? 'Max purchased' : `Buy Use #${totalBought + 1}`;
+  document.getElementById('magnet-buy-cost').textContent  = nextCost ? `🪙 ${nextCost}` : '';
+  document.getElementById('magnet-uses').textContent      = magnetUsesLeft;
+  const actBtn = document.getElementById('btn-magnet');
+  actBtn.disabled = magnetUsesLeft <= 0 || magnetActive || gameOver;
+  document.getElementById('magnet-cd').textContent = magnetActive
+    ? `Active: ${Math.ceil((magnetEnd - Date.now())/1000)}s`
+    : magnetUsesLeft > 0 ? 'Ready!' : 'No uses';
 
   document.getElementById('btn-clear').disabled = coins < 50;
 }
 
-function updateMagnetLabel() {
-  const el = document.getElementById('magnet-cd');
-  if (magnetActive) {
-    el.textContent = `🧲 Active: ${Math.ceil((magnetEnd - Date.now())/1000)}s`;
-    el.style.color = '#44aaff';
-  } else if (magnetCooldownEnd > Date.now()) {
-    el.textContent = `Cooldown: ${Math.ceil((magnetCooldownEnd - Date.now())/1000)}s`;
-    el.style.color = '#446688';
-  } else {
-    el.textContent = 'Ready!'; el.style.color = '#44cc88';
-  }
-}
 
 // ─── Input ────────────────────────────────────────────────────────────────────
 canvas.addEventListener('click', e => {
@@ -916,8 +892,8 @@ function update() {
     }
   }
 
-  const pull = magnetActive ? MAGNET_LEVELS[magnetLevel].pull : 0.025;
-  const rng  = magnetActive ? 500 : 200;
+  const pull = magnetActive ? 3.5 : 0.025;
+  const rng  = magnetActive ? W : 200;
 
   for (const it of items) {
     if (it.scale < 1) it.scale = Math.min(1, it.scale + 0.07);
@@ -1101,7 +1077,7 @@ function drawOrders() {
       rr(sx,5,sw,ORDER_H-11,8); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#2a1400'; ctx.font = '10px sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(ordersServed < 3 ? 'Serve 3 to unlock' : 'Incoming…', sx+sw/2, ORDER_H/2-4);
+      ctx.fillText(ordersServed < 12 ? 'Serve 12 to unlock' : 'Incoming…', sx+sw/2, ORDER_H/2-4);
     }
   }
 
@@ -1259,7 +1235,6 @@ function loop(ts) {
   if (ts - _lastPhysics >= PHYSICS_MS) {
     _lastPhysics = ts;
     update();
-    updateMagnetLabel();
   }
   ctx.clearRect(0,0,W,H);
   drawOrders();
@@ -1272,7 +1247,7 @@ function loop(ts) {
 // ─── Boot ─────────────────────────────────────────────────────────────────────
 buildChainList();
 updateUI();
-spawnOrder();
+setTimeout(spawnOrder, 12000);
 loop();
 </script>
 </body>
