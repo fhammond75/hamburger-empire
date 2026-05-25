@@ -661,7 +661,7 @@ function buyLucky() {
 function buyRecipe(tier) {
   const idx = RECIPE_TIERS.indexOf(tier);
   if (idx === -1 || unlockedRecipes.has(tier)) return;
-  if (tier > highestMerge) return; // must have discovered this tier first
+  if (tier > highestMerge + 1) return; // must have discovered the tier below first
   const cost = RECIPE_COSTS[idx];
   if (coins < cost) return;
   coins -= cost;
@@ -791,7 +791,7 @@ function updateUI() {
   for (let i = 0; i < RECIPE_TIERS.length; i++) {
     const tier = RECIPE_TIERS[i];
     const cost = RECIPE_COSTS[i];
-    if (tier > highestMerge) continue; // not discovered yet, hide
+    if (tier > highestMerge + 1) continue; // show one step ahead so you can buy before merging
     anyRecipeVisible = true;
     const owned = unlockedRecipes.has(tier);
     const btn = document.createElement('button');
