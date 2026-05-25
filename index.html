@@ -100,6 +100,15 @@
     </button>
   </div>
 
+  <div class="panel">
+    <h2>🥒 Auto Dropper</h2>
+    <div id="autodrop-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">Off</div>
+    <button class="upg-btn" id="btn-autodrop" onclick="buyAutoDrop()">
+      <span id="autodrop-label">Buy Auto Drop</span><span class="cost" id="autodrop-cost">🪙 40</span>
+    </button>
+    <div id="lucky-pct" style="font-size:0.72rem;color:#448844;margin-top:6px">🍀 Lucky drop: 0%</div>
+  </div>
+
   <div class="panel" id="magnet-panel">
     <h2>🧲 Magnet</h2>
     <div id="magnet-power-row">
@@ -159,6 +168,10 @@ const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕
 const FRESH_MS = 30000;
 const WARM_MS  = 60000;
 
+// Auto-dropper upgrade levels: interval in ms
+const AUTO_DROP_INTERVALS = [6000, 4000, 2000];
+const AUTO_DROP_COSTS     = [40, 100, 250];
+
 // Magnet upgrade: [waves, attraction-strength, cost]
 const MAGNET_LEVELS = [
   { waves: 1, pull: 0.08, label: '1 wave + 30s' },
@@ -183,10 +196,13 @@ let highestMerge = 0;   // highest tier ever merged TO
 let gameOver     = false;
 let selectedItem = null;
 
-let magnetLevel       = 0;   // index into MAGNET_LEVELS
+let magnetLevel       = 0;
 let magnetActive      = false;
 let magnetEnd         = 0;
 let magnetCooldownEnd = 0;
+
+let autoDropLevel   = 0;   // 0 = off, 1-3 = active tiers
+let autoDropLastMs  = 0;   // timestamp of last auto-drop
 
 const EXPAND_COSTS = [30, 80, 200, 500];
 
@@ -331,15 +347,39 @@ function getItemAt(x, y) {
   return null;
 }
 
-function spawnPickle(x, y) {
+// Returns a tier index weighted toward lower tiers from the discovered pool.
+// Chance of a lucky ingredient = highestMerge * 10%, capped at 70%.
+function getLuckyDropType() {
+  if (highestMerge === 0) return 0;
+  const luckyChance = Math.min(0.70, highestMerge * 0.10);
+  if (Math.random() > luckyChance) return 0; // plain pickle
+  // Pick from tiers 1..highestMerge with weight 1/tier (lower = more likely)
+  const weights = [];
+  for (let t = 1; t <= highestMerge; t++) weights.push(1 / t);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let t = 1; t <= highestMerge; t++) {
+    r -= weights[t - 1];
+    if (r <= 0) return t;
+  }
+  return highestMerge;
+}
+
+function spawnItem(x, y, forceType) {
   if (items.length >= maxItems) { addPopup(x, y, '🍳 Kitchen Full!'); return; }
-  const r = ITEMS[0].radius;
-  items.push(createItem(0,
+  const type = forceType !== undefined ? forceType : getLuckyDropType();
+  const r    = ITEMS[type].radius;
+  const item = createItem(type,
     Math.max(r, Math.min(W - r, x)),
     Math.max(ARENA_TOP + r, Math.min(H - r, y))
-  ));
+  );
+  items.push(item);
+  if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
   updateUI();
 }
+
+// Keep old name as alias for click handler
+function spawnPickle(x, y) { spawnItem(x, y); }
 
 function discardSelected() {
   if (!selectedItem) return;
@@ -425,6 +465,15 @@ function upgradeMagnet() {
   updateUI();
 }
 
+// ─── Auto Dropper ─────────────────────────────────────────────────────────────
+function buyAutoDrop() {
+  if (autoDropLevel >= AUTO_DROP_COSTS.length || coins < AUTO_DROP_COSTS[autoDropLevel]) return;
+  coins -= AUTO_DROP_COSTS[autoDropLevel];
+  autoDropLevel++;
+  autoDropLastMs = Date.now();
+  updateUI();
+}
+
 // ─── Other upgrades ───────────────────────────────────────────────────────────
 function buyExpand() {
   if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
@@ -455,6 +504,7 @@ function restartGame() {
   score = 0; coins = 0; hearts = 3; ordersServed = 0;
   maxItems = 12; expandLevel = 0; highestMerge = 0;
   magnetLevel = 0; magnetActive = false; magnetEnd = 0; magnetCooldownEnd = 0;
+  autoDropLevel = 0; autoDropLastMs = 0;
   selectedItem = null; gameOver = false;
   items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
   buildChainList();
@@ -530,6 +580,28 @@ function updateUI() {
   }
 
   document.getElementById('btn-clear').disabled = coins < 50;
+
+  // Auto Dropper
+  const adBtn  = document.getElementById('btn-autodrop');
+  const adCost = document.getElementById('autodrop-cost');
+  const adInfo = document.getElementById('autodrop-info');
+  if (autoDropLevel >= AUTO_DROP_COSTS.length) {
+    adBtn.disabled = true; adCost.textContent = 'Max!';
+    document.getElementById('autodrop-label').textContent = 'Auto Drop';
+  } else {
+    adBtn.disabled     = coins < AUTO_DROP_COSTS[autoDropLevel];
+    adCost.textContent = `🪙 ${AUTO_DROP_COSTS[autoDropLevel]}`;
+    document.getElementById('autodrop-label').textContent =
+      autoDropLevel === 0 ? 'Buy Auto Drop' : `Upgrade (Lv ${autoDropLevel}→${autoDropLevel+1})`;
+  }
+  if (autoDropLevel > 0) {
+    const interval = AUTO_DROP_INTERVALS[autoDropLevel - 1] / 1000;
+    adInfo.textContent = `Every ${interval}s · Lv ${autoDropLevel}/3`;
+  } else {
+    adInfo.textContent = 'Off';
+  }
+  const luckyPct = Math.min(70, highestMerge * 10);
+  document.getElementById('lucky-pct').textContent = `🍀 Lucky drop: ${luckyPct}%`;
 }
 
 function updateMagnetCooldownLabel() {
@@ -590,6 +662,23 @@ function update() {
   }
 
   tickOrders();
+
+  // Auto-dropper
+  if (autoDropLevel > 0 && items.length < maxItems) {
+    const interval = AUTO_DROP_INTERVALS[autoDropLevel - 1];
+    if (Date.now() - autoDropLastMs >= interval) {
+      autoDropLastMs = Date.now();
+      // Drop at a random x near the top of the arena
+      const type = getLuckyDropType();
+      const r    = ITEMS[type].radius;
+      const x    = r + Math.random() * (W - r * 2);
+      const y    = ARENA_TOP + r + 10 + Math.random() * 60;
+      const item = createItem(type, x, y);
+      items.push(item);
+      if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
+      updateUI();
+    }
+  }
 
   const pullStrength = magnetActive ? MAGNET_LEVELS[magnetLevel].pull : 0.025;
   const pullRange    = magnetActive ? 500 : 200;
