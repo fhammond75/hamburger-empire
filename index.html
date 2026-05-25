@@ -248,13 +248,15 @@ function maxOrderSlots() {
 }
 
 function maxOrderTier() {
-  // gradually unlock higher tiers as player progresses
-  return Math.min(ITEMS.length - 2, Math.floor(ordersServed / 4));
+  // Tier 1 minimum — pickles are the seed ingredient, not orderable
+  return Math.min(ITEMS.length - 2, 1 + Math.floor(ordersServed / 4));
 }
 
 function spawnOrder() {
   if (orders.length >= maxOrderSlots()) return;
-  const tier = Math.floor(Math.random() * (maxOrderTier() + 1));
+  // tier 1 (tomato) at minimum; grows with experience
+  const max  = maxOrderTier();
+  const tier = 1 + Math.floor(Math.random() * max);
   orders.push({
     id: orderSeed++,
     type: tier,
