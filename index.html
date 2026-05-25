@@ -822,7 +822,7 @@ function drawOrders() {
       ctx.shadowBlur = 0;
 
       // "wants" label
-      ctx.fillStyle = '#ffe4aa'; ctx.font = '8px sans-serif';
+      ctx.fillStyle = '#331500'; ctx.font = 'bold 8px sans-serif';
       ctx.textAlign = 'left'; ctx.textBaseline = 'top';
       ctx.fillText('wants:', sx + 52, 8);
 
@@ -839,23 +839,23 @@ function drawOrders() {
 
         // Circle bg
         ctx.beginPath(); ctx.arc(ix, iy, 18, 0, Math.PI*2);
-        ctx.fillStyle = want.served ? 'rgba(0,180,80,0.25)' : 'rgba(255,120,0,0.18)';
+        ctx.fillStyle = want.served ? 'rgba(0,140,60,0.75)' : 'rgba(40,20,0,0.70)';
         ctx.fill();
-        ctx.strokeStyle = want.served ? '#44cc66' : f.color;
-        ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.strokeStyle = want.served ? '#33bb55' : '#331500';
+        ctx.lineWidth = 2; ctx.stroke();
 
         // Emoji
         ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.globalAlpha = want.served ? 0.5 : 1;
+        ctx.globalAlpha = want.served ? 0.45 : 1;
         ctx.fillText(ITEMS[want.type].emoji, ix, iy);
         ctx.globalAlpha = 1;
 
         // Tick / name
         if (want.served) {
-          ctx.fillStyle = '#44cc66'; ctx.font = 'bold 12px sans-serif';
+          ctx.fillStyle = '#ccffcc'; ctx.font = 'bold 13px sans-serif';
           ctx.fillText('✓', ix, iy);
         } else {
-          ctx.fillStyle = '#886644'; ctx.font = '7px sans-serif';
+          ctx.fillStyle = '#331500'; ctx.font = 'bold 7px sans-serif';
           ctx.textBaseline = 'top';
           ctx.fillText(ITEMS[want.type].name, ix, iy + 20);
         }
