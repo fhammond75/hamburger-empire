@@ -790,7 +790,7 @@ function rr(x,y,w,h,r) {
 // ─── Draw orders strip ────────────────────────────────────────────────────────
 function drawOrders() {
   const now = Date.now();
-  ctx.fillStyle = '#3d1f00';
+  ctx.fillStyle = '#5c3010';
   ctx.fillRect(0, 0, W, ORDER_H);
   ctx.strokeStyle = '#ff9933'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0,ORDER_H); ctx.lineTo(W,ORDER_H); ctx.stroke();
@@ -808,8 +808,8 @@ function drawOrders() {
       const urgent = frac < 0.2;
 
       // Card background
-      ctx.fillStyle   = urgent ? 'rgba(200,30,0,0.75)' : 'rgba(255,180,80,0.55)';
-      ctx.strokeStyle = urgent ? '#ff4422' : '#ffaa44';
+      ctx.fillStyle   = urgent ? 'rgba(200,30,0,0.85)' : 'rgba(255,210,140,0.82)';
+      ctx.strokeStyle = urgent ? '#ff4422' : '#ffcc66';
       ctx.lineWidth = 1.5;
       rr(sx, 5, sw, ORDER_H - 11, 8); ctx.fill(); ctx.stroke();
 
@@ -880,13 +880,11 @@ function drawOrders() {
         ctx.fillStyle = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
         rr(bx,by,bw*frac,bh,3); ctx.fill();
       }
-      // Seconds remaining only when low
+      // Seconds remaining — always visible above timer bar
       const sec = Math.ceil((o.deadline-now)/1000);
-      if (sec <= 30) {
-        ctx.fillStyle = urgent ? '#ff4422' : '#886644';
-        ctx.font = '8px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(`${sec}s`, sx+sw/2, ORDER_H-9);
-      }
+      ctx.fillStyle = urgent ? '#ff4422' : '#442200';
+      ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(`${sec}s`, sx+sw/2, ORDER_H-9);
 
     } else {
       ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.strokeStyle = '#1a0900'; ctx.lineWidth=1;
