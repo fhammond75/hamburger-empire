@@ -508,17 +508,18 @@ function update() {
       it.vy += (Math.random() - 0.5) * 0.2;
     }
 
-    // Magnet: attract same-type items toward each other
-    if (magnetActive) {
-      for (const other of items) {
-        if (other === it || other.type !== it.type) continue;
-        const dx = other.x - it.x, dy = other.y - it.y;
-        const d  = Math.sqrt(dx * dx + dy * dy);
-        if (d > 0 && d < 220) {
-          const f = 0.012 / d;
-          it.vx += dx * f;
-          it.vy += dy * f;
-        }
+    // Always attract same-type items toward each other.
+    // Magnet power-up doubles the pull range and strength.
+    const pullRange    = magnetActive ? 400 : 200;
+    const pullStrength = magnetActive ? 0.06 : 0.025;
+    for (const other of items) {
+      if (other === it || other.type !== it.type) continue;
+      const dx = other.x - it.x, dy = other.y - it.y;
+      const d  = Math.sqrt(dx * dx + dy * dy);
+      if (d > 0 && d < pullRange) {
+        const f = pullStrength / d;
+        it.vx += dx * f;
+        it.vy += dy * f;
       }
     }
 
@@ -537,33 +538,19 @@ function update() {
     if (it.y + it.radius > H)         { it.y = H - it.radius;     it.vy = -Math.abs(it.vy); }
   }
 
-  // Merge detection
-  const merged = new Set();
-  for (let i = 0; i < items.length; i++) {
-    if (merged.has(items[i].id)) continue;
-    for (let j = i + 1; j < items.length; j++) {
-      if (merged.has(items[j].id)) continue;
-      const a = items[i], b = items[j];
-      if (a.type !== b.type) continue;
-      if (a.scale < 0.9 || b.scale < 0.9) continue;
-      const dx = b.x - a.x, dy = b.y - a.y;
-      if (dx * dx + dy * dy < (a.radius + b.radius) ** 2) {
-        merged.add(a.id); merged.add(b.id);
-        mergeItems(a, b);
-        break;
-      }
-    }
-  }
-
-  // Separation
+  // Separation — push overlapping items apart, leaving a small gap so
+  // the merge check (which fires at touching distance) always wins.
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       const a = items[i], b = items[j];
       const dx = b.x - a.x, dy = b.y - a.y;
       const d  = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      const min = a.radius + b.radius;
-      if (d < min) {
-        const push = (min - d) / 2;
+      // Only separate different-type items (or items still scaling in).
+      // Same-type items that overlap get merged below — don't push them away.
+      const sameType = a.type === b.type && a.scale >= 0.85 && b.scale >= 0.85;
+      const sepMin = sameType ? 0 : a.radius + b.radius;
+      if (d < sepMin) {
+        const push = (sepMin - d) / 2;
         const nx = dx / d, ny = dy / d;
         a.x -= nx * push; a.y -= ny * push;
         b.x += nx * push; b.y += ny * push;
@@ -572,6 +559,27 @@ function update() {
           a.vx -= rv * nx * 0.3; a.vy -= rv * ny * 0.3;
           b.vx += rv * nx * 0.3; b.vy += rv * ny * 0.3;
         }
+      }
+    }
+  }
+
+  // Merge detection — runs after separation so positions are settled.
+  // Same-type items that are touching (or overlapping) merge immediately.
+  const merged = new Set();
+  for (let i = 0; i < items.length; i++) {
+    if (merged.has(items[i].id)) continue;
+    for (let j = i + 1; j < items.length; j++) {
+      if (merged.has(items[j].id)) continue;
+      const a = items[i], b = items[j];
+      if (a.type !== b.type) continue;
+      if (a.scale < 0.85 || b.scale < 0.85) continue;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      // +4px buffer — items touching are guaranteed to be within range
+      const threshold = a.radius + b.radius + 4;
+      if (dx * dx + dy * dy <= threshold * threshold) {
+        merged.add(a.id); merged.add(b.id);
+        mergeItems(a, b);
+        break;
       }
     }
   }
