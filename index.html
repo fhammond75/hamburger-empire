@@ -263,6 +263,24 @@ const unlockedRecipes = new Set();
 let cooksHired    = 0;
 let cookLastMerge = 0;
 
+// ─── Emoji canvas cache (pre-render each emoji/size once, use drawImage) ───────
+const _emojiCache = {};
+function emojiImg(emoji, size) {
+  const key = emoji + size;
+  if (_emojiCache[key]) return _emojiCache[key];
+  const oc = document.createElement('canvas');
+  oc.width = oc.height = size * 2;
+  const ox = oc.getContext('2d');
+  ox.font = `${size}px serif`;
+  ox.textAlign = 'center'; ox.textBaseline = 'middle';
+  ox.fillText(emoji, size, size);
+  return (_emojiCache[key] = oc);
+}
+
+// ─── Physics rate limiter ──────────────────────────────────────────────────────
+const PHYSICS_MS = 33; // ~30fps physics, draw uncapped
+let _lastPhysics = 0;
+
 const soldCounts = new Array(ITEMS.length).fill(0);
 
 const items     = [];
@@ -677,7 +695,8 @@ function restartGame() {
 }
 
 // ─── Particles / popups ───────────────────────────────────────────────────────
-function spawnParticles(x, y, emoji, count = 7) {
+function spawnParticles(x, y, emoji, count = 6) {
+  if (particles.length > 40) return; // cap total particle count
   for (let i = 0; i < count; i++) {
     const angle = (Math.PI * 2 / count) * i + Math.random() * 0.4;
     const spd   = 1.8 + Math.random() * 2.5;
@@ -1005,13 +1024,11 @@ function drawOrders() {
       ctx.lineWidth = 1.5;
       rr(sx, 5, sw, ORDER_H - 11, 8); ctx.fill(); ctx.stroke();
 
-      // ── Customer ──
-      ctx.font = '32px serif';   // BIG emoji so it's clearly visible
+      // ── Customer — halo as circle, no shadowBlur ──
+      ctx.beginPath(); ctx.arc(sx + 26, 38, 20, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,210,120,0.35)'; ctx.fill();
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      // Light halo behind customer for contrast
-      ctx.shadowColor = 'rgba(255,200,80,0.5)'; ctx.shadowBlur = 12;
-      ctx.fillText(o.customer, sx + 26, 38);
-      ctx.shadowBlur = 0;
+      ctx.drawImage(emojiImg(o.customer, 28), sx + 26 - 28, 38 - 28, 56, 56);
 
       // "wants" label
       ctx.fillStyle = '#331500'; ctx.font = 'bold 8px sans-serif';
@@ -1122,8 +1139,8 @@ function drawArena() {
 function drawItems() {
   for (const p of particles) {
     ctx.globalAlpha = p.life * 0.9;
-    ctx.font=`${p.size}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(p.emoji, p.x, p.y);
+    const ps = Math.round(p.size);
+    ctx.drawImage(emojiImg(p.emoji, ps), p.x - ps, p.y - ps, ps*2, ps*2);
   }
   ctx.globalAlpha = 1;
 
@@ -1137,30 +1154,30 @@ function drawItems() {
     ctx.translate(it.x, it.y);
     ctx.scale(it.scale, it.scale);
 
-    if (isSel)             { ctx.shadowColor='#ff5500'; ctx.shadowBlur=22; }
-    else if (it.glowTimer) { ctx.shadowColor='#ffdd00'; ctx.shadowBlur=14+it.glowTimer*0.3; }
-    else if (isWanted)     { ctx.shadowColor=f.color;   ctx.shadowBlur=14; }
-    else if (magnetActive) { ctx.shadowColor='#2266ff'; ctx.shadowBlur=6; }
-
-    ctx.beginPath(); ctx.arc(0,0,it.radius,0,Math.PI*2);
-    const g = ctx.createRadialGradient(-it.radius*.28,-it.radius*.28,it.radius*.1,0,0,it.radius);
-    g.addColorStop(0,'rgba(255,255,255,0.14)'); g.addColorStop(1,'rgba(0,0,0,0.42)');
-    ctx.fillStyle=g; ctx.fill();
-    ctx.strokeStyle = isSel ? '#ff6600' : isWanted ? f.color : magnetActive ? '#2255cc' : 'rgba(255,160,60,0.22)';
-    ctx.lineWidth = isSel||isWanted ? 2.5 : 1.5;
-    ctx.stroke(); ctx.shadowBlur=0;
-
-    ctx.font=`${it.radius*1.1}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(ITEMS[it.type].emoji, 0, 2);
-
-    if (isSel) {
-      const pulse = 0.5+0.5*Math.sin(Date.now()/140);
-      ctx.strokeStyle=`rgba(255,85,0,${0.3+0.3*pulse})`; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.arc(0,0,it.radius+7,0,Math.PI*2); ctx.stroke();
+    // Glow ring — drawn as extra arcs, no shadowBlur
+    const glowColor = isSel ? '#ff6600' : it.glowTimer ? '#ffdd00' : isWanted ? f.color : magnetActive ? '#4488ff' : null;
+    if (glowColor) {
+      const pulseW = isSel ? 2 + 2*Math.sin(Date.now()/140) : it.glowTimer ? 2 : 2;
+      ctx.beginPath(); ctx.arc(0, 0, it.radius + 5, 0, Math.PI*2);
+      ctx.strokeStyle = glowColor; ctx.lineWidth = pulseW + 2; ctx.globalAlpha = 0.35; ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(0, 0, it.radius + 3, 0, Math.PI*2);
+      ctx.strokeStyle = glowColor; ctx.lineWidth = pulseW; ctx.stroke();
     }
+
+    // Circle body
+    ctx.beginPath(); ctx.arc(0, 0, it.radius, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(10,5,0,0.82)'; ctx.fill();
+    ctx.strokeStyle = glowColor || 'rgba(255,160,60,0.3)';
+    ctx.lineWidth = glowColor ? 2 : 1.5; ctx.stroke();
+
+    // Emoji — drawImage from cache (much faster than fillText)
+    const eSize = Math.round(it.radius * 1.1);
+    ctx.drawImage(emojiImg(ITEMS[it.type].emoji, eSize), -eSize, -eSize + 2, eSize*2, eSize*2);
+
     if (isWanted && !isSel) {
-      ctx.fillStyle=f.color; ctx.font=`${it.radius*.38}px sans-serif`;
-      ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+      ctx.fillStyle = f.color; ctx.font = `${it.radius*.38}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
       ctx.fillText('▲', 0, -it.radius*.6);
     }
     ctx.restore();
@@ -1179,13 +1196,13 @@ function drawItems() {
       ctx.font = 'bold 17px sans-serif';
       const tw = ctx.measureText(p.text).width;
       const pw = tw + 24, ph = 26, px = p.x - pw/2, py = p.y - ph/2;
-      // Shadow
-      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
+      // Dark offset "shadow" pill (no shadowBlur)
+      rr(px+2, py+2, pw, ph, 13);
+      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
       // Pill bg
       rr(px, py, pw, ph, 13);
       ctx.fillStyle = bg; ctx.fill();
       ctx.strokeStyle = border; ctx.lineWidth = 2; ctx.stroke();
-      ctx.shadowBlur = 0;
       // Star pips above pill
       const starStr = '★'.repeat(p.stars) + '☆'.repeat(3 - p.stars);
       ctx.font = '9px sans-serif';
@@ -1194,30 +1211,23 @@ function drawItems() {
       // Text
       ctx.font = `bold ${isCombo ? 15 : 17}px sans-serif`;
       ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3;
       ctx.fillText(p.text, p.x, p.y);
-      ctx.shadowBlur = 0;
 
     } else if (p.style === 'lucky') {
       ctx.font = 'bold 14px sans-serif';
-      ctx.shadowColor = '#003300'; ctx.shadowBlur = 6;
       ctx.fillStyle = '#66ff88';
       ctx.fillText(p.text, p.x, p.y);
-      ctx.shadowBlur = 0;
 
     } else if (p.style === 'danger') {
       ctx.font = 'bold 16px sans-serif';
-      ctx.shadowColor = '#330000'; ctx.shadowBlur = 8;
       ctx.fillStyle = '#ff5544';
       ctx.fillText(p.text, p.x, p.y);
-      ctx.shadowBlur = 0;
 
     } else {
       ctx.font = 'bold 13px sans-serif';
-      ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+      ctx.fillStyle = '#ffdd44';
       ctx.fillStyle = '#ffdd44';
       ctx.fillText(p.text, p.x, p.y);
-      ctx.shadowBlur = 0;
     }
 
     ctx.restore();
@@ -1229,8 +1239,7 @@ function drawGameOver() {
   ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fillRect(0,0,W,H);
   ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.font='bold 38px sans-serif'; ctx.fillStyle='#ff4422';
-  ctx.shadowColor='#ff0000'; ctx.shadowBlur=20;
-  ctx.fillText('CLOSED! 🍔', W/2, H/2-80); ctx.shadowBlur=0;
+  ctx.fillText('CLOSED! 🍔', W/2, H/2-80);
   ctx.font='20px sans-serif'; ctx.fillStyle='#ffcc44';
   ctx.fillText(`Final Score: ${score.toLocaleString()}`, W/2, H/2-30);
   ctx.fillStyle='#aa8833'; ctx.font='15px sans-serif';
@@ -1245,9 +1254,12 @@ function drawGameOver() {
 }
 
 // ─── Main loop ────────────────────────────────────────────────────────────────
-function loop() {
-  update();
-  updateMagnetLabel();
+function loop(ts) {
+  if (ts - _lastPhysics >= PHYSICS_MS) {
+    _lastPhysics = ts;
+    update();
+    updateMagnetLabel();
+  }
   ctx.clearRect(0,0,W,H);
   drawOrders();
   drawArena();
