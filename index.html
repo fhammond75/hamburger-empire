@@ -8,185 +8,221 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #1a0a00;
+      background: #110600;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      padding: 20px;
-      gap: 20px;
+      padding: 18px;
+      gap: 18px;
     }
 
     #game-wrap {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     h1 {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       color: #ffcc44;
-      text-shadow: 0 0 12px #ff8800;
+      text-shadow: 0 0 14px #ff8800;
       letter-spacing: 2px;
     }
 
     #canvas {
       border: 2px solid #ff8800;
       border-radius: 8px;
-      background: #0f0500;
-      cursor: crosshair;
+      background: #0c0300;
       display: block;
-      box-shadow: 0 0 24px #ff440044;
+      box-shadow: 0 0 28px #ff440033;
     }
 
     #hint {
-      color: #ff8844;
-      font-size: 0.85rem;
-      opacity: 0.8;
+      color: #aa6622;
+      font-size: 0.78rem;
     }
 
+    /* ── Sidebar ── */
     #sidebar {
-      width: 210px;
+      width: 200px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      padding-top: 48px;
+      gap: 12px;
+      padding-top: 44px;
     }
 
     .panel {
-      background: #2a1200;
-      border: 1px solid #ff8800;
+      background: #1e0c00;
+      border: 1px solid #8b4400;
       border-radius: 8px;
-      padding: 14px;
+      padding: 12px;
     }
 
     .panel h2 {
-      font-size: 0.9rem;
+      font-size: 0.78rem;
       color: #ffcc44;
-      margin-bottom: 10px;
       text-transform: uppercase;
       letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    #hearts-row {
+      font-size: 1.5rem;
+      letter-spacing: 4px;
     }
 
     #score-val {
-      font-size: 2rem;
+      font-size: 1.8rem;
       color: #ff8800;
       font-weight: bold;
+      line-height: 1;
     }
 
-    #best-val {
-      font-size: 0.8rem;
-      color: #aa6622;
-      margin-top: 2px;
+    #best-val, #coins-val {
+      font-size: 0.75rem;
+      color: #885522;
+      margin-top: 3px;
     }
 
-    .upgrade-btn {
+    #coins-val { color: #ccaa00; margin-top: 6px; }
+
+    #day-val {
+      font-size: 1rem;
+      color: #ffaa44;
+    }
+
+    #capacity-row {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
-      background: #3a1800;
-      border: 1px solid #ff8800;
-      border-radius: 6px;
-      padding: 8px 10px;
-      cursor: pointer;
-      width: 100%;
-      color: #fff;
-      text-align: left;
-      margin-bottom: 8px;
-      transition: background 0.15s;
-    }
-
-    .upgrade-btn:hover:not(:disabled) { background: #5a2800; }
-    .upgrade-btn:disabled { opacity: 0.4; cursor: default; }
-
-    .upgrade-btn .u-name { font-size: 0.85rem; color: #ffcc44; }
-    .upgrade-btn .u-desc { font-size: 0.72rem; color: #cc9944; }
-    .upgrade-btn .u-cost { font-size: 0.78rem; color: #ff8800; margin-top: 2px; }
-
-    .chain-item {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 5px;
-      font-size: 0.8rem;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
       color: #cc9944;
     }
 
-    .chain-item span:first-child { font-size: 1.1rem; }
-    .chain-item .arrow { color: #ff8800; }
+    #cap-bar-wrap {
+      background: #331500;
+      border-radius: 4px;
+      height: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    #cap-bar {
+      height: 100%;
+      background: #ff8800;
+      border-radius: 4px;
+      transition: width 0.2s;
+    }
+
+    .upg-btn {
+      width: 100%;
+      background: #2a1200;
+      border: 1px solid #8b4400;
+      border-radius: 6px;
+      color: #fff;
+      padding: 7px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.15s;
+    }
+
+    .upg-btn:hover:not(:disabled) { background: #3d1a00; }
+    .upg-btn:disabled { opacity: 0.35; cursor: default; }
+
+    .upg-btn .cost { color: #ccaa00; font-size: 0.75rem; }
+
+    /* ── Merge chain reference ── */
+    .chain-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .chain-step {
+      font-size: 1.1rem;
+      title: 'name';
+    }
   </style>
 </head>
 <body>
 
 <div id="game-wrap">
   <h1>🍔 Hamburger Empire</h1>
-  <canvas id="canvas" width="520" height="620"></canvas>
-  <div id="hint">Click the arena to drop a pickle!</div>
+  <canvas id="canvas" width="540" height="680"></canvas>
+  <div id="hint">Click arena → drop pickle &nbsp;|&nbsp; Click item → serve or select &nbsp;|&nbsp; Selected item → 🗑 to trash</div>
 </div>
 
 <div id="sidebar">
   <div class="panel">
-    <h2>Score</h2>
-    <div id="score-val">0</div>
-    <div id="best-val">Best: 0</div>
+    <h2>Lives</h2>
+    <div id="hearts-row">❤️❤️❤️</div>
   </div>
 
   <div class="panel">
-    <h2>Upgrades</h2>
-    <button class="upgrade-btn" id="upg-autospawn" onclick="buyUpgrade('autospawn')">
-      <span class="u-name">🥒 Auto Pickle</span>
-      <span class="u-desc">Spawns a pickle every 3s</span>
-      <span class="u-cost" id="upg-autospawn-cost">Cost: 10 pts</span>
+    <h2>Score</h2>
+    <div id="score-val">0</div>
+    <div id="best-val">Best: 0</div>
+    <div id="coins-val">🪙 0 coins</div>
+  </div>
+
+  <div class="panel">
+    <h2>Shift</h2>
+    <div id="day-val">Day 1</div>
+  </div>
+
+  <div class="panel">
+    <h2>Kitchen</h2>
+    <div id="capacity-row">
+      <span id="cap-label">0 / 12 items</span>
+    </div>
+    <div id="cap-bar-wrap"><div id="cap-bar" style="width:0%"></div></div>
+    <button class="upg-btn" id="btn-expand" onclick="buyExpand()">
+      <span>Expand +4 slots</span>
+      <span class="cost" id="expand-cost">🪙 30</span>
     </button>
-    <button class="upgrade-btn" id="upg-speed" onclick="buyUpgrade('speed')">
-      <span class="u-name">⚡ Drift Speed</span>
-      <span class="u-desc">Items move faster</span>
-      <span class="u-cost" id="upg-speed-cost">Cost: 25 pts</span>
+  </div>
+
+  <div class="panel">
+    <h2>Power-ups</h2>
+    <button class="upg-btn" id="btn-slowtime" onclick="buySlowTime()" style="margin-bottom:6px">
+      <span>⏱ Slow Timers (15s)</span>
+      <span class="cost">🪙 40</span>
     </button>
-    <button class="upgrade-btn" id="upg-magnet" onclick="buyUpgrade('magnet')">
-      <span class="u-name">🧲 Magnet</span>
-      <span class="u-desc">Same items attract each other</span>
-      <span class="u-cost" id="upg-magnet-cost">Cost: 50 pts</span>
-    </button>
-    <button class="upgrade-btn" id="upg-double" onclick="buyUpgrade('double')">
-      <span class="u-name">✨ Double Score</span>
-      <span class="u-desc">2× points per merge</span>
-      <span class="u-cost" id="upg-double-cost">Cost: 100 pts</span>
+    <button class="upg-btn" id="btn-heart" onclick="buyHeart()">
+      <span>❤️ Restore Heart</span>
+      <span class="cost">🪙 60</span>
     </button>
   </div>
 
   <div class="panel">
     <h2>Merge Chain</h2>
-    <div class="chain-item"><span>🥒</span><span>Pickle</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🍅</span><span>Tomato</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🥬</span><span>Lettuce</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🧅</span><span>Onion</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🧀</span><span>Cheese</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🥩</span><span>Patty</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🍔</span><span>Burger</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🍟</span><span>Fries</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🥤</span><span>Shake</span></div>
-    <div class="chain-item"><span>↓</span></div>
-    <div class="chain-item"><span>🎉</span><span>Value Meal!</span></div>
+    <div class="chain-grid" id="chain-grid"></div>
   </div>
 </div>
 
 <script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const W = canvas.width;
-const H = canvas.height;
+const ctx    = canvas.getContext('2d');
+const W = canvas.width;   // 540
+const H = canvas.height;  // 680
+
+const ORDER_H    = 115;   // reserved top strip for orders
+const ARENA_TOP  = ORDER_H;
+const TRASH_W    = 72;
+const TRASH_H    = 72;
+const TRASH_X    = W - TRASH_W - 6;
+const TRASH_Y    = H - TRASH_H - 6;
 
 const ITEMS = [
   { emoji: '🥒', name: 'Pickle',     radius: 20, score: 1   },
@@ -201,296 +237,571 @@ const ITEMS = [
   { emoji: '🎉', name: 'Value Meal', radius: 84, score: 960 },
 ];
 
-let score = 0;
-let best = 0;
-let scoreMultiplier = 1;
+const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠'];
 
-const upgrades = {
-  autospawn: { cost: 10,  bought: 0, maxLevel: 3 },
-  speed:     { cost: 25,  bought: 0, maxLevel: 3 },
-  magnet:    { cost: 50,  bought: 0, maxLevel: 1 },
-  double:    { cost: 100, bought: 0, maxLevel: 1 },
-};
+// ─── State ────────────────────────────────────────────────────────────────────
 
-let driftSpeed = 0.6;
-let magnetEnabled = false;
-let autoSpawnCount = 0;
-let autoSpawnTimer = 0;
+let score        = 0;
+let best         = 0;
+let coins        = 0;
+let hearts       = 3;
+let maxHearts    = 3;
+let ordersServed = 0;
+let difficulty   = 0;
+let maxItems     = 12;
+let expandLevel  = 0;
+const EXPAND_COSTS = [30, 80, 200, 500];
 
-// Particles
+let slowTimeActive  = false;
+let slowTimeEnd     = 0;
+let gameOver        = false;
+let selectedItem    = null;
+
+const items     = [];
+const orders    = [];   // { type, deadline, duration, customer, id }
 const particles = [];
+const popups    = [];
 
-// Score popups
-const popups = [];
+let nextId   = 0;
+let orderId  = 0;
 
-// Active items on canvas
-const items = [];
-let nextId = 0;
+// ─── Build chain reference ────────────────────────────────────────────────────
+
+(function buildChain() {
+  const grid = document.getElementById('chain-grid');
+  ITEMS.forEach((it, i) => {
+    const el = document.createElement('span');
+    el.className = 'chain-step';
+    el.title = it.name;
+    el.textContent = it.emoji;
+    grid.appendChild(el);
+    if (i < ITEMS.length - 1) {
+      const arr = document.createElement('span');
+      arr.style.cssText = 'color:#885522;font-size:0.7rem;display:flex;align-items:center';
+      arr.textContent = '→';
+      grid.appendChild(arr);
+    }
+  });
+})();
+
+// ─── Order helpers ─────────────────────────────────────────────────────────────
+
+function orderDuration(type) {
+  const base = (9 + type * 3.5) * 1000;
+  const speed = slowTimeActive ? 0.55 : 1;
+  return Math.max(4500, base / (1 + difficulty * 0.07)) * speed;
+}
+
+function spawnOrder() {
+  if (orders.length >= 3 || gameOver) return;
+  const maxTier = Math.min(ITEMS.length - 2, Math.floor(difficulty * 0.65));
+  const type    = Math.floor(Math.random() * (maxTier + 1));
+  const dur     = orderDuration(type);
+  orders.push({
+    id: orderId++,
+    type,
+    deadline: Date.now() + dur,
+    duration: dur,
+    customer: CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)],
+  });
+}
+
+function tickOrders() {
+  const now = Date.now();
+  for (let i = orders.length - 1; i >= 0; i--) {
+    if (now >= orders[i].deadline) {
+      expireOrder(i);
+    }
+  }
+}
+
+function expireOrder(i) {
+  orders.splice(i, 1);
+  loseHeart();
+  setTimeout(spawnOrder, 2500);
+}
+
+function serveOrder(item) {
+  const idx = orders.findIndex(o => o.type === item.type);
+  if (idx === -1) return false;
+
+  const order    = orders[idx];
+  const timeLeft = Math.max(0, order.deadline - Date.now());
+  const bonus    = Math.floor(timeLeft / 400);
+  const earned   = Math.floor(ITEMS[item.type].score * (1 + difficulty * 0.15)) + bonus;
+
+  orders.splice(idx, 1);
+  removeItem(item);
+
+  score  += earned;
+  coins  += Math.max(1, Math.floor(earned / 3));
+  best    = Math.max(best, score);
+  ordersServed++;
+  difficulty = Math.floor(ordersServed / 5);
+
+  spawnParticles(item.x, item.y, ITEMS[item.type].emoji);
+  addPopup(item.x, item.y, `+${earned}`);
+
+  setTimeout(spawnOrder, 1500);
+  updateUI();
+  return true;
+}
+
+function loseHeart() {
+  if (gameOver) return;
+  hearts = Math.max(0, hearts - 1);
+  updateUI();
+  if (hearts <= 0) triggerGameOver();
+}
+
+// ─── Item helpers ─────────────────────────────────────────────────────────────
 
 function createItem(type, x, y, vx, vy) {
-  const def = ITEMS[type];
+  const spd = 0.5;
   return {
-    id: nextId++,
+    id:    nextId++,
     type,
-    x,
-    y,
-    vx: vx !== undefined ? vx : (Math.random() - 0.5) * driftSpeed * 2,
-    vy: vy !== undefined ? vy : (Math.random() - 0.5) * driftSpeed * 2,
-    radius: def.radius,
-    merging: false,
-    scale: 0.1,  // for spawn animation
+    x, y,
+    vx: vx ?? (Math.random() - 0.5) * spd * 2,
+    vy: vy ?? (Math.random() - 0.5) * spd * 2,
+    radius:    ITEMS[type].radius,
+    scale:     0.05,
     glowTimer: 0,
+    trashAnim: 0,  // 0 = normal, >0 = fading out
   };
 }
 
-function spawnPickle(x, y) {
-  const ix = Math.max(ITEMS[0].radius, Math.min(W - ITEMS[0].radius, x));
-  const iy = Math.max(ITEMS[0].radius, Math.min(H - ITEMS[0].radius, y));
-  items.push(createItem(0, ix, iy));
+function removeItem(item) {
+  const i = items.indexOf(item);
+  if (i !== -1) items.splice(i, 1);
+  if (selectedItem === item) selectedItem = null;
 }
 
-canvas.addEventListener('click', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  spawnPickle(e.clientX - rect.left, e.clientY - rect.top);
-});
+function discardSelected() {
+  if (!selectedItem) return;
+  spawnParticles(selectedItem.x, selectedItem.y, '💨');
+  removeItem(selectedItem);
+  updateUI();
+}
+
+function getItemAt(x, y) {
+  // iterate in reverse so topmost (drawn last) is picked first
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    const dx = it.x - x, dy = it.y - y;
+    if (dx * dx + dy * dy <= it.radius * it.radius) return it;
+  }
+  return null;
+}
+
+function isInTrash(x, y) {
+  return x >= TRASH_X && x <= TRASH_X + TRASH_W &&
+         y >= TRASH_Y && y <= TRASH_Y + TRASH_H;
+}
+
+function spawnPickle(x, y) {
+  if (items.length >= maxItems) {
+    addPopup(x, y - 20, 'Kitchen Full!');
+    return;
+  }
+  const r  = ITEMS[0].radius;
+  const cx = Math.max(r, Math.min(W - r, x));
+  const cy = Math.max(ARENA_TOP + r, Math.min(H - r, y));
+  items.push(createItem(0, cx, cy));
+  updateUI();
+}
+
+// ─── Merge ────────────────────────────────────────────────────────────────────
+
+function mergeItems(a, b) {
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const next = a.type + 1;
+
+  spawnParticles(mx, my, ITEMS[a.type].emoji);
+  removeItem(a);
+  removeItem(b);
+
+  if (next < ITEMS.length) {
+    const newIt = createItem(next, mx, my, 0, 0);
+    newIt.glowTimer = 40;
+    items.push(newIt);
+    addPopup(mx, my - 10, ITEMS[next].emoji);
+  }
+  updateUI();
+}
+
+// ─── Particles / popups ───────────────────────────────────────────────────────
 
 function spawnParticles(x, y, emoji) {
-  for (let i = 0; i < 8; i++) {
-    const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.3;
-    const speed = 2 + Math.random() * 3;
+  for (let i = 0; i < 7; i++) {
+    const angle = (Math.PI * 2 / 7) * i;
+    const spd   = 2 + Math.random() * 2.5;
     particles.push({
       x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 1.0,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd,
+      life: 1,
       emoji,
-      size: 14 + Math.random() * 8,
+      size: 13 + Math.random() * 7,
     });
   }
 }
 
 function addPopup(x, y, text) {
-  popups.push({ x, y, text, life: 1.0, vy: -1.5 });
+  popups.push({ x, y, text, life: 1, vy: -1.4 });
 }
 
-function mergeItems(a, b) {
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2;
-  const nextType = a.type + 1;
+// ─── Upgrades / purchases ─────────────────────────────────────────────────────
 
-  spawnParticles(mx, my, ITEMS[a.type].emoji);
-
-  // Remove both
-  const ai = items.indexOf(a);
-  const bi = items.indexOf(b);
-  if (ai !== -1) items.splice(ai, 1);
-  // bi index may have shifted
-  const bi2 = items.indexOf(b);
-  if (bi2 !== -1) items.splice(bi2, 1);
-
-  const pts = ITEMS[a.type].score * scoreMultiplier;
-  score += pts;
-  if (score > best) best = score;
-  addPopup(mx, my - 20, `+${pts}`);
-
-  if (nextType < ITEMS.length) {
-    const newItem = createItem(nextType, mx, my, 0, 0);
-    newItem.glowTimer = 30;
-    items.push(newItem);
-  }
-
+function buyExpand() {
+  if (expandLevel >= EXPAND_COSTS.length) return;
+  const cost = EXPAND_COSTS[expandLevel];
+  if (coins < cost) return;
+  coins -= cost;
+  maxItems += 4;
+  expandLevel++;
   updateUI();
 }
+
+function buySlowTime() {
+  if (coins < 40) return;
+  coins -= 40;
+  slowTimeActive = true;
+  slowTimeEnd    = Date.now() + 15000;
+  // stretch existing order deadlines
+  orders.forEach(o => { o.deadline += 8000; });
+  updateUI();
+}
+
+function buyHeart() {
+  if (coins < 60 || hearts >= maxHearts) return;
+  coins -= 60;
+  hearts = Math.min(maxHearts, hearts + 1);
+  updateUI();
+}
+
+// ─── UI update ────────────────────────────────────────────────────────────────
 
 function updateUI() {
-  document.getElementById('score-val').textContent = score;
-  document.getElementById('best-val').textContent = `Best: ${best}`;
+  document.getElementById('hearts-row').textContent =
+    '❤️'.repeat(hearts) + '🖤'.repeat(Math.max(0, maxHearts - hearts));
+  document.getElementById('score-val').textContent  = score;
+  document.getElementById('best-val').textContent   = `Best: ${best}`;
+  document.getElementById('coins-val').textContent  = `🪙 ${coins} coins`;
+  document.getElementById('day-val').textContent    = `Day ${difficulty + 1}`;
 
-  for (const [key, upg] of Object.entries(upgrades)) {
-    const btn = document.getElementById(`upg-${key}`);
-    const costEl = document.getElementById(`upg-${key}-cost`);
-    if (upg.bought >= upg.maxLevel) {
-      btn.disabled = true;
-      costEl.textContent = 'Maxed out!';
-    } else {
-      btn.disabled = score < upg.cost;
-      costEl.textContent = `Cost: ${upg.cost} pts`;
-    }
+  const capPct = items.length / maxItems * 100;
+  document.getElementById('cap-label').textContent  = `${items.length} / ${maxItems} items`;
+  document.getElementById('cap-bar').style.width    = `${Math.min(100, capPct)}%`;
+  document.getElementById('cap-bar').style.background =
+    capPct >= 90 ? '#ff3300' : capPct >= 70 ? '#ff8800' : '#44cc44';
+
+  // Expand button
+  const expandBtn  = document.getElementById('btn-expand');
+  const expandCost = document.getElementById('expand-cost');
+  if (expandLevel >= EXPAND_COSTS.length) {
+    expandBtn.disabled = true;
+    expandCost.textContent = 'Max!';
+  } else {
+    expandBtn.disabled = coins < EXPAND_COSTS[expandLevel];
+    expandCost.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`;
   }
+
+  document.getElementById('btn-slowtime').disabled = coins < 40 || slowTimeActive;
+  document.getElementById('btn-heart').disabled    = coins < 60 || hearts >= maxHearts;
 }
 
-function buyUpgrade(key) {
-  const upg = upgrades[key];
-  if (upg.bought >= upg.maxLevel || score < upg.cost) return;
-  score -= upg.cost;
-  upg.bought++;
-  upg.cost = Math.floor(upg.cost * 3);
+// ─── Game over ────────────────────────────────────────────────────────────────
 
-  if (key === 'speed') driftSpeed = Math.min(2, driftSpeed + 0.5);
-  if (key === 'magnet') magnetEnabled = true;
-  if (key === 'autospawn') autoSpawnCount++;
-  if (key === 'double') scoreMultiplier *= 2;
+function triggerGameOver() {
+  gameOver = true;
+  if (score > best) best = score;
+}
 
+function restartGame() {
+  score = 0; coins = 0; hearts = 3; ordersServed = 0;
+  difficulty = 0; maxItems = 12; expandLevel = 0;
+  slowTimeActive = false; selectedItem = null; gameOver = false;
+  items.length = 0; orders.length = 0;
+  particles.length = 0; popups.length = 0;
+  // seed initial orders
+  for (let i = 0; i < 2; i++) setTimeout(spawnOrder, i * 600);
   updateUI();
 }
 
-function update() {
-  // Auto spawn
-  if (autoSpawnCount > 0) {
-    autoSpawnTimer++;
-    const interval = Math.max(30, 180 - autoSpawnCount * 40); // ~3s → faster with more levels
-    if (autoSpawnTimer >= interval) {
-      autoSpawnTimer = 0;
-      const x = ITEMS[0].radius + Math.random() * (W - ITEMS[0].radius * 2);
-      const y = ITEMS[0].radius + Math.random() * (H / 2);
-      items.push(createItem(0, x, y));
+// ─── Input ────────────────────────────────────────────────────────────────────
+
+canvas.addEventListener('click', e => {
+  if (gameOver) {
+    const bx = W / 2 - 70, by = H / 2 + 40;
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left, cy = e.clientY - rect.top;
+    if (cx >= bx && cx <= bx + 140 && cy >= by && cy <= by + 42) {
+      restartGame();
     }
+    return;
   }
 
-  // Update items
-  for (const item of items) {
-    // Spawn scale animation
-    if (item.scale < 1) {
-      item.scale = Math.min(1, item.scale + 0.08);
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  // Trash zone — only useful when something is selected
+  if (selectedItem && isInTrash(mx, my)) {
+    discardSelected();
+    return;
+  }
+
+  // Click on an item
+  const hit = getItemAt(mx, my);
+  if (hit && hit.scale >= 0.85) {
+    // Already selected → deselect
+    if (hit === selectedItem) {
+      selectedItem = null;
+      return;
+    }
+    // Try to serve
+    const served = serveOrder(hit);
+    if (!served) {
+      // No matching order — select it for possible discard
+      selectedItem = hit;
+    } else {
+      selectedItem = null;
+    }
+    return;
+  }
+
+  // Click in arena → deselect or spawn
+  selectedItem = null;
+  if (my > ARENA_TOP) {
+    spawnPickle(mx, my);
+  }
+});
+
+// ─── Update ───────────────────────────────────────────────────────────────────
+
+function update() {
+  if (gameOver) return;
+
+  // Slow time expiry
+  if (slowTimeActive && Date.now() > slowTimeEnd) {
+    slowTimeActive = false;
+  }
+
+  tickOrders();
+
+  // Physics
+  for (const it of items) {
+    if (it.scale < 1) it.scale = Math.min(1, it.scale + 0.07);
+    if (it.glowTimer > 0) it.glowTimer--;
+
+    // Tiny random nudge
+    if (Math.random() < 0.03) {
+      it.vx += (Math.random() - 0.5) * 0.25;
+      it.vy += (Math.random() - 0.5) * 0.25;
     }
 
-    // Glow timer
-    if (item.glowTimer > 0) item.glowTimer--;
-
-    // Add tiny random drift
-    if (Math.random() < 0.04) {
-      item.vx += (Math.random() - 0.5) * 0.3;
-      item.vy += (Math.random() - 0.5) * 0.3;
-    }
-
-    // Magnet: attract same-type items
-    if (magnetEnabled) {
-      for (const other of items) {
-        if (other === item || other.type !== item.type) continue;
-        const dx = other.x - item.x;
-        const dy = other.y - item.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 0 && dist < 200) {
-          const force = 0.015 / dist;
-          item.vx += dx * force;
-          item.vy += dy * force;
-        }
+    // Attract matching items to each other (mild)
+    for (const other of items) {
+      if (other === it || other.type !== it.type) continue;
+      const dx = other.x - it.x, dy = other.y - it.y;
+      const d  = Math.sqrt(dx * dx + dy * dy);
+      if (d > 0 && d < 180) {
+        const f = 0.008 / d;
+        it.vx += dx * f;
+        it.vy += dy * f;
       }
     }
 
-    // Dampen velocity
-    item.vx *= 0.98;
-    item.vy *= 0.98;
+    it.vx *= 0.97;
+    it.vy *= 0.97;
 
-    // Clamp speed
-    const spd = Math.sqrt(item.vx * item.vx + item.vy * item.vy);
-    const maxSpd = driftSpeed * 2;
-    if (spd > maxSpd) {
-      item.vx = (item.vx / spd) * maxSpd;
-      item.vy = (item.vy / spd) * maxSpd;
-    }
+    const maxSpd = 1.4;
+    const spd    = Math.sqrt(it.vx * it.vx + it.vy * it.vy);
+    if (spd > maxSpd) { it.vx = it.vx / spd * maxSpd; it.vy = it.vy / spd * maxSpd; }
 
-    // Move
-    item.x += item.vx;
-    item.y += item.vy;
+    it.x += it.vx;
+    it.y += it.vy;
 
-    // Bounce off walls
-    if (item.x - item.radius < 0) { item.x = item.radius; item.vx = Math.abs(item.vx); }
-    if (item.x + item.radius > W) { item.x = W - item.radius; item.vx = -Math.abs(item.vx); }
-    if (item.y - item.radius < 0) { item.y = item.radius; item.vy = Math.abs(item.vy); }
-    if (item.y + item.radius > H) { item.y = H - item.radius; item.vy = -Math.abs(item.vy); }
+    // Bounds: arena region only
+    if (it.x - it.radius < 0)       { it.x = it.radius;       it.vx =  Math.abs(it.vx); }
+    if (it.x + it.radius > W)       { it.x = W - it.radius;   it.vx = -Math.abs(it.vx); }
+    if (it.y - it.radius < ARENA_TOP) { it.y = ARENA_TOP + it.radius; it.vy = Math.abs(it.vy); }
+    if (it.y + it.radius > H)       { it.y = H - it.radius;   it.vy = -Math.abs(it.vy); }
   }
 
-  // Collision / merge detection
+  // Merge detection
   const merged = new Set();
   for (let i = 0; i < items.length; i++) {
     if (merged.has(items[i].id)) continue;
     for (let j = i + 1; j < items.length; j++) {
       if (merged.has(items[j].id)) continue;
       const a = items[i], b = items[j];
-      if (a.type !== b.type) continue;
+      if (a.type !== b.type || a.type === ITEMS.length - 1) continue;
       if (a.scale < 0.9 || b.scale < 0.9) continue;
-
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      const minDist = a.radius + b.radius;
-
-      if (dist < minDist) {
-        merged.add(a.id);
-        merged.add(b.id);
+      const dx = b.x - a.x, dy = b.y - a.y;
+      if (dx * dx + dy * dy < (a.radius + b.radius) ** 2) {
+        merged.add(a.id); merged.add(b.id);
         mergeItems(a, b);
         break;
       }
-
-      // Push apart if overlapping (different types or not merging yet)
     }
   }
 
-  // Push overlapping items apart (any type)
+  // Separation pass
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       const a = items[i], b = items[j];
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      const minDist = a.radius + b.radius - 2;
-      if (dist < minDist) {
-        const overlap = (minDist - dist) / 2;
-        const nx = dx / dist;
-        const ny = dy / dist;
-        a.x -= nx * overlap;
-        a.y -= ny * overlap;
-        b.x += nx * overlap;
-        b.y += ny * overlap;
-        // Reflect velocities slightly
-        const relVx = b.vx - a.vx;
-        const relVy = b.vy - a.vy;
-        const dot = relVx * nx + relVy * ny;
-        if (dot < 0) {
-          a.vx -= dot * nx * 0.4;
-          a.vy -= dot * ny * 0.4;
-          b.vx += dot * nx * 0.4;
-          b.vy += dot * ny * 0.4;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d  = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const min = a.radius + b.radius - 1;
+      if (d < min) {
+        const push = (min - d) / 2;
+        const nx = dx / d, ny = dy / d;
+        a.x -= nx * push; a.y -= ny * push;
+        b.x += nx * push; b.y += ny * push;
+        const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+        if (rv < 0) {
+          a.vx -= rv * nx * 0.35; a.vy -= rv * ny * 0.35;
+          b.vx += rv * nx * 0.35; b.vy += rv * ny * 0.35;
         }
       }
     }
   }
 
-  // Update particles
+  // Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx *= 0.92;
-    p.vy *= 0.92;
+    p.x += p.vx; p.y += p.vy;
+    p.vx *= 0.91; p.vy *= 0.91;
     p.life -= 0.04;
     if (p.life <= 0) particles.splice(i, 1);
   }
 
-  // Update popups
+  // Popups
   for (let i = popups.length - 1; i >= 0; i--) {
     const p = popups[i];
     p.y += p.vy;
-    p.life -= 0.025;
+    p.life -= 0.022;
     if (p.life <= 0) popups.splice(i, 1);
   }
 }
 
-function draw() {
-  ctx.clearRect(0, 0, W, H);
+// ─── Draw ─────────────────────────────────────────────────────────────────────
 
-  // Subtle grid
-  ctx.strokeStyle = 'rgba(255,136,0,0.05)';
+function drawOrders() {
+  const now    = Date.now();
+  const slotW  = W / 3;
+  const pad    = 10;
+
+  // Background strip
+  ctx.fillStyle = '#180800';
+  ctx.fillRect(0, 0, W, ORDER_H);
+  ctx.strokeStyle = '#3a1800';
   ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 40) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-  }
-  for (let y = 0; y < H; y += 40) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, ORDER_H); ctx.lineTo(W, ORDER_H); ctx.stroke();
+
+  for (let i = 0; i < 3; i++) {
+    const sx = i * slotW + pad;
+    const sw = slotW - pad * 2;
+
+    if (i < orders.length) {
+      const o       = orders[i];
+      const frac    = Math.max(0, (o.deadline - now) / o.duration);
+      const urgent  = frac < 0.25;
+
+      // Card bg
+      ctx.fillStyle = urgent ? 'rgba(180,20,0,0.25)' : 'rgba(255,136,0,0.08)';
+      ctx.strokeStyle = urgent ? '#cc3300' : '#5a2800';
+      ctx.lineWidth = 1;
+      roundRect(ctx, sx, 6, sw, ORDER_H - 16, 6);
+      ctx.fill(); ctx.stroke();
+
+      // Customer + arrow + item
+      ctx.font = '20px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(o.customer, sx + sw * 0.28, 36);
+      ctx.fillStyle = '#885522';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('→', sx + sw * 0.5, 36);
+      ctx.font = '22px serif';
+      ctx.fillText(ITEMS[o.type].emoji, sx + sw * 0.72, 36);
+
+      // Item name
+      ctx.fillStyle = urgent ? '#ff6644' : '#cc8844';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(ITEMS[o.type].name, sx + sw / 2, 56);
+
+      // Timer bar
+      const barX = sx + 4, barY = 66, barW = sw - 8, barH = 8;
+      ctx.fillStyle = '#1a0800';
+      roundRect(ctx, barX, barY, barW, barH, 3); ctx.fill();
+      const col = frac > 0.5 ? '#44cc44' : frac > 0.25 ? '#ffaa00' : '#ff3300';
+      ctx.fillStyle = col;
+      roundRect(ctx, barX, barY, barW * frac, barH, 3); ctx.fill();
+
+      // Time text
+      ctx.fillStyle = '#885533';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${Math.ceil((o.deadline - now) / 1000)}s`, sx + sw / 2, 84);
+
+    } else {
+      // Empty slot
+      ctx.fillStyle = 'rgba(255,136,0,0.04)';
+      ctx.strokeStyle = '#2a1000';
+      ctx.lineWidth = 1;
+      roundRect(ctx, sx, 6, sw, ORDER_H - 16, 6);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#331500';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Waiting…', sx + sw / 2, ORDER_H / 2 - 4);
+    }
   }
 
-  // Particles
+  // Slow-time indicator
+  if (slowTimeActive) {
+    const rem = Math.ceil((slowTimeEnd - Date.now()) / 1000);
+    ctx.fillStyle = '#44aaff';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`⏱ ${rem}s`, W - 8, 4);
+  }
+}
+
+function drawArena() {
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(255,100,0,0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, ARENA_TOP); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = ARENA_TOP; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Trash zone
+  const trashHover = selectedItem !== null;
+  ctx.fillStyle   = trashHover ? 'rgba(255,60,0,0.25)' : 'rgba(80,20,0,0.4)';
+  ctx.strokeStyle = trashHover ? '#ff4400'              : '#4a1800';
+  ctx.lineWidth   = trashHover ? 2 : 1;
+  roundRect(ctx, TRASH_X, TRASH_Y, TRASH_W, TRASH_H, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.font = '28px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🗑️', TRASH_X + TRASH_W / 2, TRASH_Y + TRASH_H / 2);
+  if (trashHover) {
+    ctx.fillStyle = '#ff6644';
+    ctx.font = '9px sans-serif';
+    ctx.fillText('click to trash', TRASH_X + TRASH_W / 2, TRASH_Y + TRASH_H - 9);
+  }
+}
+
+function drawItems() {
+  // Particles first
   for (const p of particles) {
     ctx.globalAlpha = p.life;
     ctx.font = `${p.size}px serif`;
@@ -500,64 +811,123 @@ function draw() {
   }
   ctx.globalAlpha = 1;
 
-  // Items
-  for (const item of items) {
-    const def = ITEMS[item.type];
-    const r = item.radius * item.scale;
+  for (const it of items) {
+    const isSelected = (it === selectedItem);
+    const hasOrder   = orders.some(o => o.type === it.type);
 
     ctx.save();
-    ctx.translate(item.x, item.y);
-    ctx.scale(item.scale, item.scale);
+    ctx.translate(it.x, it.y);
+    ctx.scale(it.scale, it.scale);
 
-    // Glow for freshly merged items
-    if (item.glowTimer > 0) {
-      ctx.shadowColor = '#ffcc00';
-      ctx.shadowBlur = 20 + item.glowTimer;
-    }
+    // Glow
+    if (it.glowTimer > 0) { ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 16 + it.glowTimer * 0.5; }
+    if (isSelected)        { ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 18; }
+    if (hasOrder && !isSelected) { ctx.shadowColor = '#44ff88'; ctx.shadowBlur = 10; }
 
-    // Circle background
+    // Circle
     ctx.beginPath();
-    ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
-    const grad = ctx.createRadialGradient(-item.radius * 0.3, -item.radius * 0.3, item.radius * 0.1, 0, 0, item.radius);
-    grad.addColorStop(0, 'rgba(255,255,255,0.18)');
-    grad.addColorStop(1, 'rgba(0,0,0,0.35)');
-    ctx.fillStyle = grad;
+    ctx.arc(0, 0, it.radius, 0, Math.PI * 2);
+    const g = ctx.createRadialGradient(-it.radius * 0.25, -it.radius * 0.25, it.radius * 0.1, 0, 0, it.radius);
+    g.addColorStop(0, 'rgba(255,255,255,0.15)');
+    g.addColorStop(1, 'rgba(0,0,0,0.4)');
+    ctx.fillStyle = g;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,200,100,0.35)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isSelected ? '#ff6600' : hasOrder ? '#44ff88' : 'rgba(255,180,80,0.3)';
+    ctx.lineWidth   = isSelected || hasOrder ? 2.5 : 1.5;
     ctx.stroke();
-
     ctx.shadowBlur = 0;
 
     // Emoji
-    const fontSize = item.radius * 1.1;
-    ctx.font = `${fontSize}px serif`;
+    ctx.font = `${it.radius * 1.1}px serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(def.emoji, 0, 2);
+    ctx.fillText(ITEMS[it.type].emoji, 0, 2);
+
+    // Selected ring pulse
+    if (isSelected) {
+      ctx.strokeStyle = `rgba(255,80,0,${0.4 + 0.3 * Math.sin(Date.now() / 150)})`;
+      ctx.lineWidth   = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, it.radius + 6, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     ctx.restore();
   }
 
-  // Score popups
+  // Popups
   for (const p of popups) {
     ctx.globalAlpha = p.life;
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
+    ctx.fillStyle   = '#ffdd55';
+    ctx.font        = 'bold 14px sans-serif';
+    ctx.textAlign   = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(p.text, p.x, p.y);
   }
   ctx.globalAlpha = 1;
 }
 
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillStyle = '#ff4400';
+  ctx.fillText('CLOSED! 🍔', W / 2, H / 2 - 70);
+
+  ctx.font = '18px sans-serif';
+  ctx.fillStyle = '#ffcc44';
+  ctx.fillText(`Score: ${score}`, W / 2, H / 2 - 30);
+  ctx.fillStyle = '#aa8833';
+  ctx.fillText(`Best:  ${best}`, W / 2, H / 2);
+
+  // Restart button
+  const bx = W / 2 - 70, by = H / 2 + 40;
+  ctx.fillStyle   = '#cc4400';
+  ctx.strokeStyle = '#ff8800';
+  ctx.lineWidth   = 2;
+  roundRect(ctx, bx, by, 140, 42, 8);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font      = 'bold 15px sans-serif';
+  ctx.fillText('Open Again!', W / 2, by + 21);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ─── Main loop ────────────────────────────────────────────────────────────────
+
 function loop() {
   update();
-  draw();
+
+  ctx.clearRect(0, 0, W, H);
+  drawOrders();
+  drawArena();
+  drawItems();
+  if (gameOver) drawGameOver();
+
   requestAnimationFrame(loop);
 }
 
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+
 updateUI();
+for (let i = 0; i < 2; i++) setTimeout(spawnOrder, i * 700);
 loop();
 </script>
 </body>
