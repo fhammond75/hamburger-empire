@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hamburger Empire</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a0a00;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    #game-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: #ffcc44;
+      text-shadow: 0 0 12px #ff8800;
+      letter-spacing: 2px;
+    }
+
+    #canvas {
+      border: 2px solid #ff8800;
+      border-radius: 8px;
+      background: #0f0500;
+      cursor: crosshair;
+      display: block;
+      box-shadow: 0 0 24px #ff440044;
+    }
+
+    #hint {
+      color: #ff8844;
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    #sidebar {
+      width: 210px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 48px;
+    }
+
+    .panel {
+      background: #2a1200;
+      border: 1px solid #ff8800;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .panel h2 {
+      font-size: 0.9rem;
+      color: #ffcc44;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #score-val {
+      font-size: 2rem;
+      color: #ff8800;
+      font-weight: bold;
+    }
+
+    #best-val {
+      font-size: 0.8rem;
+      color: #aa6622;
+      margin-top: 2px;
+    }
+
+    .upgrade-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: #3a1800;
+      border: 1px solid #ff8800;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      width: 100%;
+      color: #fff;
+      text-align: left;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+    }
+
+    .upgrade-btn:hover:not(:disabled) { background: #5a2800; }
+    .upgrade-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .upgrade-btn .u-name { font-size: 0.85rem; color: #ffcc44; }
+    .upgrade-btn .u-desc { font-size: 0.72rem; color: #cc9944; }
+    .upgrade-btn .u-cost { font-size: 0.78rem; color: #ff8800; margin-top: 2px; }
+
+    .chain-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+      color: #cc9944;
+    }
+
+    .chain-item span:first-child { font-size: 1.1rem; }
+    .chain-item .arrow { color: #ff8800; }
+  </style>
+</head>
+<body>
+
+<div id="game-wrap">
+  <h1>🍔 Hamburger Empire</h1>
+  <canvas id="canvas" width="520" height="620"></canvas>
+  <div id="hint">Click the arena to drop a pickle!</div>
+</div>
+
+<div id="sidebar">
+  <div class="panel">
+    <h2>Score</h2>
+    <div id="score-val">0</div>
+    <div id="best-val">Best: 0</div>
+  </div>
+
+  <div class="panel">
+    <h2>Upgrades</h2>
+    <button class="upgrade-btn" id="upg-autospawn" onclick="buyUpgrade('autospawn')">
+      <span class="u-name">🥒 Auto Pickle</span>
+      <span class="u-desc">Spawns a pickle every 3s</span>
+      <span class="u-cost" id="upg-autospawn-cost">Cost: 10 pts</span>
+    </button>
+    <button class="upgrade-btn" id="upg-speed" onclick="buyUpgrade('speed')">
+      <span class="u-name">⚡ Drift Speed</span>
+      <span class="u-desc">Items move faster</span>
+      <span class="u-cost" id="upg-speed-cost">Cost: 25 pts</span>
+    </button>
+    <button class="upgrade-btn" id="upg-magnet" onclick="buyUpgrade('magnet')">
+      <span class="u-name">🧲 Magnet</span>
+      <span class="u-desc">Same items attract each other</span>
+      <span class="u-cost" id="upg-magnet-cost">Cost: 50 pts</span>
+    </button>
+    <button class="upgrade-btn" id="upg-double" onclick="buyUpgrade('double')">
+      <span class="u-name">✨ Double Score</span>
+      <span class="u-desc">2× points per merge</span>
+      <span class="u-cost" id="upg-double-cost">Cost: 100 pts</span>
+    </button>
+  </div>
+
+  <div class="panel">
+    <h2>Merge Chain</h2>
+    <div class="chain-item"><span>🥒</span><span>Pickle</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🍅</span><span>Tomato</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🥬</span><span>Lettuce</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🧅</span><span>Onion</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🧀</span><span>Cheese</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🥩</span><span>Patty</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🍔</span><span>Burger</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🍟</span><span>Fries</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🥤</span><span>Shake</span></div>
+    <div class="chain-item"><span>↓</span></div>
+    <div class="chain-item"><span>🎉</span><span>Value Meal!</span></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width;
+const H = canvas.height;
+
+const ITEMS = [
+  { emoji: '🥒', name: 'Pickle',     radius: 20, score: 1   },
+  { emoji: '🍅', name: 'Tomato',     radius: 26, score: 3   },
+  { emoji: '🥬', name: 'Lettuce',    radius: 32, score: 7   },
+  { emoji: '🧅', name: 'Onion',      radius: 38, score: 15  },
+  { emoji: '🧀', name: 'Cheese',     radius: 44, score: 30  },
+  { emoji: '🥩', name: 'Patty',      radius: 50, score: 60  },
+  { emoji: '🍔', name: 'Burger',     radius: 58, score: 120 },
+  { emoji: '🍟', name: 'Fries',      radius: 66, score: 240 },
+  { emoji: '🥤', name: 'Shake',      radius: 74, score: 480 },
+  { emoji: '🎉', name: 'Value Meal', radius: 84, score: 960 },
+];
+
+let score = 0;
+let best = 0;
+let scoreMultiplier = 1;
+
+const upgrades = {
+  autospawn: { cost: 10,  bought: 0, maxLevel: 3 },
+  speed:     { cost: 25,  bought: 0, maxLevel: 3 },
+  magnet:    { cost: 50,  bought: 0, maxLevel: 1 },
+  double:    { cost: 100, bought: 0, maxLevel: 1 },
+};
+
+let driftSpeed = 0.6;
+let magnetEnabled = false;
+let autoSpawnCount = 0;
+let autoSpawnTimer = 0;
+
+// Particles
+const particles = [];
+
+// Score popups
+const popups = [];
+
+// Active items on canvas
+const items = [];
+let nextId = 0;
+
+function createItem(type, x, y, vx, vy) {
+  const def = ITEMS[type];
+  return {
+    id: nextId++,
+    type,
+    x,
+    y,
+    vx: vx !== undefined ? vx : (Math.random() - 0.5) * driftSpeed * 2,
+    vy: vy !== undefined ? vy : (Math.random() - 0.5) * driftSpeed * 2,
+    radius: def.radius,
+    merging: false,
+    scale: 0.1,  // for spawn animation
+    glowTimer: 0,
+  };
+}
+
+function spawnPickle(x, y) {
+  const ix = Math.max(ITEMS[0].radius, Math.min(W - ITEMS[0].radius, x));
+  const iy = Math.max(ITEMS[0].radius, Math.min(H - ITEMS[0].radius, y));
+  items.push(createItem(0, ix, iy));
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  spawnPickle(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+function spawnParticles(x, y, emoji) {
+  for (let i = 0; i < 8; i++) {
+    const angle = (Math.PI * 2 / 8) * i + Math.random() * 0.3;
+    const speed = 2 + Math.random() * 3;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1.0,
+      emoji,
+      size: 14 + Math.random() * 8,
+    });
+  }
+}
+
+function addPopup(x, y, text) {
+  popups.push({ x, y, text, life: 1.0, vy: -1.5 });
+}
+
+function mergeItems(a, b) {
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const nextType = a.type + 1;
+
+  spawnParticles(mx, my, ITEMS[a.type].emoji);
+
+  // Remove both
+  const ai = items.indexOf(a);
+  const bi = items.indexOf(b);
+  if (ai !== -1) items.splice(ai, 1);
+  // bi index may have shifted
+  const bi2 = items.indexOf(b);
+  if (bi2 !== -1) items.splice(bi2, 1);
+
+  const pts = ITEMS[a.type].score * scoreMultiplier;
+  score += pts;
+  if (score > best) best = score;
+  addPopup(mx, my - 20, `+${pts}`);
+
+  if (nextType < ITEMS.length) {
+    const newItem = createItem(nextType, mx, my, 0, 0);
+    newItem.glowTimer = 30;
+    items.push(newItem);
+  }
+
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('best-val').textContent = `Best: ${best}`;
+
+  for (const [key, upg] of Object.entries(upgrades)) {
+    const btn = document.getElementById(`upg-${key}`);
+    const costEl = document.getElementById(`upg-${key}-cost`);
+    if (upg.bought >= upg.maxLevel) {
+      btn.disabled = true;
+      costEl.textContent = 'Maxed out!';
+    } else {
+      btn.disabled = score < upg.cost;
+      costEl.textContent = `Cost: ${upg.cost} pts`;
+    }
+  }
+}
+
+function buyUpgrade(key) {
+  const upg = upgrades[key];
+  if (upg.bought >= upg.maxLevel || score < upg.cost) return;
+  score -= upg.cost;
+  upg.bought++;
+  upg.cost = Math.floor(upg.cost * 3);
+
+  if (key === 'speed') driftSpeed = Math.min(2, driftSpeed + 0.5);
+  if (key === 'magnet') magnetEnabled = true;
+  if (key === 'autospawn') autoSpawnCount++;
+  if (key === 'double') scoreMultiplier *= 2;
+
+  updateUI();
+}
+
+function update() {
+  // Auto spawn
+  if (autoSpawnCount > 0) {
+    autoSpawnTimer++;
+    const interval = Math.max(30, 180 - autoSpawnCount * 40); // ~3s → faster with more levels
+    if (autoSpawnTimer >= interval) {
+      autoSpawnTimer = 0;
+      const x = ITEMS[0].radius + Math.random() * (W - ITEMS[0].radius * 2);
+      const y = ITEMS[0].radius + Math.random() * (H / 2);
+      items.push(createItem(0, x, y));
+    }
+  }
+
+  // Update items
+  for (const item of items) {
+    // Spawn scale animation
+    if (item.scale < 1) {
+      item.scale = Math.min(1, item.scale + 0.08);
+    }
+
+    // Glow timer
+    if (item.glowTimer > 0) item.glowTimer--;
+
+    // Add tiny random drift
+    if (Math.random() < 0.04) {
+      item.vx += (Math.random() - 0.5) * 0.3;
+      item.vy += (Math.random() - 0.5) * 0.3;
+    }
+
+    // Magnet: attract same-type items
+    if (magnetEnabled) {
+      for (const other of items) {
+        if (other === item || other.type !== item.type) continue;
+        const dx = other.x - item.x;
+        const dy = other.y - item.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0 && dist < 200) {
+          const force = 0.015 / dist;
+          item.vx += dx * force;
+          item.vy += dy * force;
+        }
+      }
+    }
+
+    // Dampen velocity
+    item.vx *= 0.98;
+    item.vy *= 0.98;
+
+    // Clamp speed
+    const spd = Math.sqrt(item.vx * item.vx + item.vy * item.vy);
+    const maxSpd = driftSpeed * 2;
+    if (spd > maxSpd) {
+      item.vx = (item.vx / spd) * maxSpd;
+      item.vy = (item.vy / spd) * maxSpd;
+    }
+
+    // Move
+    item.x += item.vx;
+    item.y += item.vy;
+
+    // Bounce off walls
+    if (item.x - item.radius < 0) { item.x = item.radius; item.vx = Math.abs(item.vx); }
+    if (item.x + item.radius > W) { item.x = W - item.radius; item.vx = -Math.abs(item.vx); }
+    if (item.y - item.radius < 0) { item.y = item.radius; item.vy = Math.abs(item.vy); }
+    if (item.y + item.radius > H) { item.y = H - item.radius; item.vy = -Math.abs(item.vy); }
+  }
+
+  // Collision / merge detection
+  const merged = new Set();
+  for (let i = 0; i < items.length; i++) {
+    if (merged.has(items[i].id)) continue;
+    for (let j = i + 1; j < items.length; j++) {
+      if (merged.has(items[j].id)) continue;
+      const a = items[i], b = items[j];
+      if (a.type !== b.type) continue;
+      if (a.scale < 0.9 || b.scale < 0.9) continue;
+
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = a.radius + b.radius;
+
+      if (dist < minDist) {
+        merged.add(a.id);
+        merged.add(b.id);
+        mergeItems(a, b);
+        break;
+      }
+
+      // Push apart if overlapping (different types or not merging yet)
+    }
+  }
+
+  // Push overlapping items apart (any type)
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      const a = items[i], b = items[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const minDist = a.radius + b.radius - 2;
+      if (dist < minDist) {
+        const overlap = (minDist - dist) / 2;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        a.x -= nx * overlap;
+        a.y -= ny * overlap;
+        b.x += nx * overlap;
+        b.y += ny * overlap;
+        // Reflect velocities slightly
+        const relVx = b.vx - a.vx;
+        const relVy = b.vy - a.vy;
+        const dot = relVx * nx + relVy * ny;
+        if (dot < 0) {
+          a.vx -= dot * nx * 0.4;
+          a.vy -= dot * ny * 0.4;
+          b.vx += dot * nx * 0.4;
+          b.vy += dot * ny * 0.4;
+        }
+      }
+    }
+  }
+
+  // Update particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vx *= 0.92;
+    p.vy *= 0.92;
+    p.life -= 0.04;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // Update popups
+  for (let i = popups.length - 1; i >= 0; i--) {
+    const p = popups[i];
+    p.y += p.vy;
+    p.life -= 0.025;
+    if (p.life <= 0) popups.splice(i, 1);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Subtle grid
+  ctx.strokeStyle = 'rgba(255,136,0,0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Particles
+  for (const p of particles) {
+    ctx.globalAlpha = p.life;
+    ctx.font = `${p.size}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.emoji, p.x, p.y);
+  }
+  ctx.globalAlpha = 1;
+
+  // Items
+  for (const item of items) {
+    const def = ITEMS[item.type];
+    const r = item.radius * item.scale;
+
+    ctx.save();
+    ctx.translate(item.x, item.y);
+    ctx.scale(item.scale, item.scale);
+
+    // Glow for freshly merged items
+    if (item.glowTimer > 0) {
+      ctx.shadowColor = '#ffcc00';
+      ctx.shadowBlur = 20 + item.glowTimer;
+    }
+
+    // Circle background
+    ctx.beginPath();
+    ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+    const grad = ctx.createRadialGradient(-item.radius * 0.3, -item.radius * 0.3, item.radius * 0.1, 0, 0, item.radius);
+    grad.addColorStop(0, 'rgba(255,255,255,0.18)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,200,100,0.35)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Emoji
+    const fontSize = item.radius * 1.1;
+    ctx.font = `${fontSize}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(def.emoji, 0, 2);
+
+    ctx.restore();
+  }
+
+  // Score popups
+  for (const p of popups) {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = '#ffcc44';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.text, p.x, p.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+updateUI();
+loop();
+</script>
+</body>
+</html>
