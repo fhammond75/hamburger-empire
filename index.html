@@ -839,23 +839,23 @@ function drawOrders() {
 
         // Circle bg
         ctx.beginPath(); ctx.arc(ix, iy, 18, 0, Math.PI*2);
-        ctx.fillStyle = want.served ? 'rgba(0,140,60,0.75)' : 'rgba(40,20,0,0.70)';
+        ctx.fillStyle = want.served ? '#2a8c50' : '#ffffff';
         ctx.fill();
-        ctx.strokeStyle = want.served ? '#33bb55' : '#331500';
+        ctx.strokeStyle = want.served ? '#1a6634' : '#442200';
         ctx.lineWidth = 2; ctx.stroke();
 
         // Emoji
-        ctx.font = '18px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.globalAlpha = want.served ? 0.45 : 1;
+        ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.globalAlpha = want.served ? 0.4 : 1;
         ctx.fillText(ITEMS[want.type].emoji, ix, iy);
         ctx.globalAlpha = 1;
 
         // Tick / name
         if (want.served) {
-          ctx.fillStyle = '#ccffcc'; ctx.font = 'bold 13px sans-serif';
+          ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px sans-serif';
           ctx.fillText('✓', ix, iy);
         } else {
-          ctx.fillStyle = '#331500'; ctx.font = 'bold 7px sans-serif';
+          ctx.fillStyle = '#442200'; ctx.font = 'bold 7px sans-serif';
           ctx.textBaseline = 'top';
           ctx.fillText(ITEMS[want.type].name, ix, iy + 20);
         }
