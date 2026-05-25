@@ -383,9 +383,8 @@ function completeOrder(order) {
   best    = Math.max(best, score);
   ordersServed++;
 
-  const stars = f.stars === 3 ? '🌟' : f.stars === 2 ? '⭐' : '☆';
   const bonus = order.isCombo ? ' COMBO!' : '';
-  addPopup(W / 2, ARENA_TOP + 50, `${stars} +${earned}${bonus}`);
+  addPopup(W / 2, ARENA_TOP + 50, `🪙 +${earned}${bonus}`, 'coin', f.stars);
 
   setTimeout(spawnOrder, 1400);
   updateUI();
@@ -413,7 +412,7 @@ function checkBoardForOrders() {
 function loseHeart() {
   if (gameOver) return;
   hearts = Math.max(0, hearts - 1);
-  addPopup(W / 2, H / 2 - 40, '💔 Order expired!');
+  addPopup(W / 2, H / 2 - 40, '💔 Order expired!', 'danger');
   updateUI();
   if (hearts <= 0) triggerGameOver();
 }
@@ -464,7 +463,7 @@ function spawnItem(x, y, forceType) {
     Math.max(ARENA_TOP + r, Math.min(H - r, y))
   );
   items.push(item);
-  if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
+  if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`, 'lucky');
   updateUI();
   // Check if new item satisfies any order once it finishes scaling in
   // (handled via periodic checkBoardForOrders in update loop)
@@ -622,7 +621,10 @@ function spawnParticles(x, y, emoji, count = 7) {
   }
 }
 
-function addPopup(x, y, text) { popups.push({ x, y, text, life: 1, vy: -1.2 }); }
+// style: 'coin' | 'lucky' | 'danger' | 'info'
+function addPopup(x, y, text, style = 'info', stars = 0) {
+  popups.push({ x, y, text, style, stars, life: 1, vy: style === 'coin' ? -1.5 : -1.0 });
+}
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
 function updateUI() {
@@ -763,7 +765,7 @@ function update() {
       const y    = ARENA_TOP + r + 10 + Math.random() * 60;
       const it   = createItem(type, x, y);
       items.push(it);
-      if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`);
+      if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`, 'lucky');
       updateUI();
       checkBoardForOrders();
     }
@@ -1042,13 +1044,61 @@ function drawItems() {
   }
 
   for (const p of popups) {
-    ctx.globalAlpha=p.life;
-    ctx.fillStyle='#ffdd44'; ctx.font='bold 15px sans-serif';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.shadowColor='#000'; ctx.shadowBlur=4;
-    ctx.fillText(p.text, p.x, p.y); ctx.shadowBlur=0;
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+    if (p.style === 'coin') {
+      // Pill badge — color by star rating
+      const isCombo = p.text.includes('COMBO');
+      const bg   = p.stars === 3 ? '#1e8c3a' : p.stars === 2 ? '#c47a00' : '#8c1a00';
+      const border = p.stars === 3 ? '#55ee77' : p.stars === 2 ? '#ffcc44' : '#ff4422';
+      ctx.font = 'bold 17px sans-serif';
+      const tw = ctx.measureText(p.text).width;
+      const pw = tw + 24, ph = 26, px = p.x - pw/2, py = p.y - ph/2;
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8;
+      // Pill bg
+      rr(px, py, pw, ph, 13);
+      ctx.fillStyle = bg; ctx.fill();
+      ctx.strokeStyle = border; ctx.lineWidth = 2; ctx.stroke();
+      ctx.shadowBlur = 0;
+      // Star pips above pill
+      const starStr = '★'.repeat(p.stars) + '☆'.repeat(3 - p.stars);
+      ctx.font = '9px sans-serif';
+      ctx.fillStyle = border;
+      ctx.fillText(starStr, p.x, py - 7);
+      // Text
+      ctx.font = `bold ${isCombo ? 15 : 17}px sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 3;
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.shadowBlur = 0;
+
+    } else if (p.style === 'lucky') {
+      ctx.font = 'bold 14px sans-serif';
+      ctx.shadowColor = '#003300'; ctx.shadowBlur = 6;
+      ctx.fillStyle = '#66ff88';
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.shadowBlur = 0;
+
+    } else if (p.style === 'danger') {
+      ctx.font = 'bold 16px sans-serif';
+      ctx.shadowColor = '#330000'; ctx.shadowBlur = 8;
+      ctx.fillStyle = '#ff5544';
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.shadowBlur = 0;
+
+    } else {
+      ctx.font = 'bold 13px sans-serif';
+      ctx.shadowColor = '#000'; ctx.shadowBlur = 4;
+      ctx.fillStyle = '#ffdd44';
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.restore();
   }
-  ctx.globalAlpha=1;
 }
 
 // ─── Game over overlay ────────────────────────────────────────────────────────
