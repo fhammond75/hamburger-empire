@@ -56,6 +56,9 @@
     .chain-row.locked { opacity: 0.28; filter: grayscale(1); }
     .chain-row.locked .chain-name { color: #442200; }
     .chain-arrow { font-size: 0.5rem; color: #332200; padding-left: 4px; }
+    .k-chip { background:#2a1400; border:1px solid #6b3400; border-radius:5px;
+              padding:3px 6px; font-size:0.78rem; display:flex; align-items:center; gap:3px; }
+    .k-chip span { color:#ccaa00; font-size:0.68rem; }
   </style>
 </head>
 <body>
@@ -93,11 +96,21 @@
 
 <div id="sidebar">
   <div class="panel">
-    <h2>Kitchen</h2>
+    <h2>🔀 Merge Board</h2>
     <div id="cap-row"><span id="cap-label">0 / 12</span><span id="cap-pct">0%</span></div>
     <div id="cap-bar-wrap"><div id="cap-bar"></div></div>
     <button class="upg-btn" id="btn-expand" onclick="buyExpand()">
       <span>Expand +4 slots</span><span class="cost" id="expand-cost">🪙 30</span>
+    </button>
+  </div>
+
+  <div class="panel" id="panel-kitchen" style="display:none">
+    <h2>🍳 Kitchen</h2>
+    <div id="kitchen-hint" style="font-size:0.72rem;color:#664422;margin-bottom:6px">Select a board item then store it here for orders.</div>
+    <div id="kitchen-stock" style="display:flex;flex-wrap:wrap;gap:5px;min-height:28px;margin-bottom:6px"></div>
+    <button class="upg-btn" id="btn-store" onclick="storeSelected()" disabled>
+      <span id="store-label">📦 Store Selected Item</span>
+      <span class="cost" id="store-info">select item first</span>
     </button>
   </div>
 
@@ -262,7 +275,8 @@ let autoDropSpeedLevel = 0;
 let luckyLevel         = 0;
 let autoDropLastMs     = 0;
 
-const unlockedRecipes = new Set();
+const unlockedRecipes  = new Set();
+const kitchenStock     = {}; // type → count of stored items
 let cooksHired    = 0;
 let cookLastMerge = 0;
 
@@ -541,6 +555,41 @@ function discardSelected() {
   updateUI();
 }
 
+function kitchenUnlocked() {
+  return cooksHired >= 1 && unlockedRecipes.size >= 1;
+}
+
+function storeSelected() {
+  if (!selectedItem || !kitchenUnlocked()) return;
+  const type = selectedItem.type;
+  kitchenStock[type] = (kitchenStock[type] || 0) + 1;
+  spawnParticles(selectedItem.x, selectedItem.y, ITEMS[type].emoji, 4);
+  removeItem(selectedItem);
+  selectedItem = null;
+  // Immediately try to fulfill any matching orders from the new stock
+  checkKitchenForOrders();
+  updateUI();
+}
+
+function checkKitchenForOrders() {
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const order of orders) {
+      const want = order.wants.find(w => !w.served && kitchenStock[w.type] > 0);
+      if (!want) continue;
+      kitchenStock[want.type]--;
+      if (kitchenStock[want.type] === 0) delete kitchenStock[want.type];
+      want.served = true;
+      soldCounts[want.type]++;
+      updateChainList();
+      if (order.wants.every(w => w.served)) completeOrder(order);
+      changed = true;
+      break;
+    }
+  }
+}
+
 // ─── Merge ────────────────────────────────────────────────────────────────────
 function mergeItems(a, b) {
   const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
@@ -709,6 +758,7 @@ function restartGame() {
   magnetUsesLeft = 0; magnetUsed = 0; magnetPullLevel = 0; magnetActive = false; magnetEnd = 0;
   autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
   unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0;
+  Object.keys(kitchenStock).forEach(k => delete kitchenStock[k]);
   soldCounts.fill(0);
   selectedItem = null; gameOver = false;
   items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
@@ -819,6 +869,35 @@ function updateUI() {
     ? 'Max staff reached'
     : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
 
+  // Kitchen panel — unlocks after 1 cook + 1 recipe
+  const kPanel = document.getElementById('panel-kitchen');
+  const kOpen  = kitchenUnlocked();
+  kPanel.style.display = kOpen ? '' : 'none';
+  if (kOpen) {
+    // Stock chips
+    const grid = document.getElementById('kitchen-stock');
+    grid.innerHTML = '';
+    const types = Object.keys(kitchenStock).map(Number).filter(t => kitchenStock[t] > 0);
+    if (types.length === 0) {
+      grid.innerHTML = '<span style="font-size:0.72rem;color:#443322">Empty — store items from the board</span>';
+    } else {
+      types.forEach(t => {
+        const chip = document.createElement('div');
+        chip.className = 'k-chip';
+        chip.innerHTML = `${ITEMS[t].emoji}<span>×${kitchenStock[t]}</span>`;
+        grid.appendChild(chip);
+      });
+    }
+    // Store button
+    const storeBtn = document.getElementById('btn-store');
+    storeBtn.disabled = !selectedItem;
+    document.getElementById('store-label').textContent = selectedItem
+      ? `📦 Store ${ITEMS[selectedItem.type].name}`
+      : '📦 Store Selected Item';
+    document.getElementById('store-info').textContent = selectedItem ? '' : 'select item first';
+    document.getElementById('kitchen-hint').style.display = types.length > 0 ? 'none' : '';
+  }
+
   // Magnet pull upgrade
   const pullAtMax  = magnetPullValue() >= MAGNET_PULL_MAX;
   const pullCost   = magnetPullUpgradeCost(magnetPullLevel);
@@ -869,10 +948,12 @@ canvas.addEventListener('click', e => {
       return;
     }
     selectedItem = (hit === selectedItem) ? null : hit;
+    updateUI();
     return;
   }
 
   selectedItem = null;
+  updateUI();
   if (my > ARENA_TOP) spawnItem(mx, my);
 });
 
