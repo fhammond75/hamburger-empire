@@ -148,6 +148,10 @@
       <span class="cost" id="cook-cost">🪙 150</span>
     </button>
     <div style="font-size:0.68rem;color:#554433;margin-top:4px" id="cook-desc">Auto-merges 1 pair every 18s</div>
+    <button class="upg-btn" id="btn-autostock" onclick="buyAutoStock()" style="margin-top:6px">
+      <span id="autostock-label">📦 Enable Kitchen Auto-Stock</span>
+      <span class="cost" id="autostock-cost">🪙 120</span>
+    </button>
   </div>
 
   <div class="panel">
@@ -250,6 +254,7 @@ const RECIPE_COSTS = [200, 500, 1200, 3000];
 const COOK_COST     = 150;
 const MAX_COOKS     = 3;
 const COOK_INTERVAL = 18000; // each cook merges a pair every 18s
+const COOK_AUTO_STOCK_COST = 120; // one-time upgrade to enable auto-stocking
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let score        = 0;
@@ -277,8 +282,9 @@ let autoDropLastMs     = 0;
 
 const unlockedRecipes  = new Set();
 const kitchenStock     = {}; // type → count of stored items
-let cooksHired    = 0;
-let cookLastMerge = 0;
+let cooksHired      = 0;
+let cookLastMerge   = 0;
+let cookAutoStock   = false;
 
 // ─── Emoji canvas cache (pre-render each emoji/size once, use drawImage) ───────
 const _emojiCache = {};
@@ -727,6 +733,14 @@ function hireCook() {
   updateUI();
 }
 
+function buyAutoStock() {
+  if (cookAutoStock || cooksHired < 1 || !kitchenUnlocked() || coins < COOK_AUTO_STOCK_COST) return;
+  coins -= COOK_AUTO_STOCK_COST;
+  cookAutoStock = true;
+  addPopup(W / 2, ARENA_TOP + 60, '📦 Cooks now stock the kitchen!', 'info');
+  updateUI();
+}
+
 function buyExpand() {
   if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
   coins -= EXPAND_COSTS[expandLevel];
@@ -757,7 +771,7 @@ function restartGame() {
   maxItems = 12; expandLevel = 0; highestMerge = 0;
   magnetUsesLeft = 0; magnetUsed = 0; magnetPullLevel = 0; magnetActive = false; magnetEnd = 0;
   autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
-  unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0;
+  unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0; cookAutoStock = false;
   Object.keys(kitchenStock).forEach(k => delete kitchenStock[k]);
   soldCounts.fill(0);
   selectedItem = null; gameOver = false;
@@ -869,6 +883,12 @@ function updateUI() {
     ? 'Max staff reached'
     : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
 
+  // Auto-stock button
+  const asBtn = document.getElementById('btn-autostock');
+  asBtn.disabled = cookAutoStock || cooksHired < 1 || !kitchenUnlocked() || coins < COOK_AUTO_STOCK_COST;
+  document.getElementById('autostock-label').textContent = cookAutoStock ? '✔ Auto-Stock Active' : '📦 Enable Kitchen Auto-Stock';
+  document.getElementById('autostock-cost').textContent  = cookAutoStock ? '' : `🪙 ${COOK_AUTO_STOCK_COST}`;
+
   // Kitchen panel — unlocks after 1 cook + 1 recipe
   const kPanel = document.getElementById('panel-kitchen');
   const kOpen  = kitchenUnlocked();
@@ -940,8 +960,16 @@ canvas.addEventListener('click', e => {
 
   const hit = getItemAt(mx, my);
   if (hit && hit.scale >= 0.85) {
+    // Force-merge: if an item is already selected and we click a different item of same type → merge
+    if (selectedItem && hit !== selectedItem && hit.type === selectedItem.type) {
+      const sx = selectedItem, sh = hit;
+      selectedItem = null;
+      mergeItems(sx, sh);
+      updateUI();
+      return;
+    }
     // Check if it satisfies any active order want
-    if (orders.some(o => o.wants.some(w => !w.served && w.type === hit.type))) {
+    if (!selectedItem && orders.some(o => o.wants.some(w => !w.served && w.type === hit.type))) {
       spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
       removeItem(hit);
       tryServeType(hit.type);
@@ -1009,6 +1037,19 @@ function update() {
         const mx = (best[0].x + best[1].x) / 2, my = (best[0].y + best[1].y) / 2;
         addPopup(mx, my - 20, '👨‍🍳', 'info');
         mergeItems(best[0], best[1]);
+      }
+
+      // Auto-stock: grab a board item needed by an active order and send it to kitchen
+      if (cookAutoStock && kitchenUnlocked()) {
+        const wantedTypes = new Set(orders.flatMap(o => o.wants.filter(w => !w.served).map(w => w.type)));
+        const candidate   = items.find(it => it.scale >= 0.85 && wantedTypes.has(it.type));
+        if (candidate) {
+          kitchenStock[candidate.type] = (kitchenStock[candidate.type] || 0) + 1;
+          addPopup(candidate.x, candidate.y - 20, '📦', 'info');
+          removeItem(candidate);
+          checkKitchenForOrders();
+          updateUI();
+        }
       }
     }
   }
