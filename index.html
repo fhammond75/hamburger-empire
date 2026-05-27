@@ -146,6 +146,16 @@
     }
     @keyframes tin  { from { opacity: 0; transform: translateY(8px) scale(0.9); } to { opacity: 1; transform: none; } }
     @keyframes tout { to   { opacity: 0; transform: translateY(-6px); } }
+
+    .drag-ghost {
+      position: fixed; pointer-events: none; z-index: 1000;
+      font-size: 3.4rem; line-height: 1;
+      opacity: 0.88;
+      transform: scale(1.15) rotate(-6deg);
+      filter: drop-shadow(0 6px 18px #000c);
+      transition: none;
+    }
+    .cell.drag-src { opacity: 0.25; }
   </style>
 </head>
 <body>
@@ -256,6 +266,12 @@ let lastTs = performance.now();
 let ordersTs = 0;
 let orderTmr = null;
 
+// drag state
+let dragFrom = -1;
+let dragging  = false;
+let dragGhost = null;
+let dragSuppressClick = false;
+
 // ── GRID ──────────────────────────────────────────────────────────────────────
 
 function buildGrid() {
@@ -264,7 +280,9 @@ function buildGrid() {
   for (let i = 0; i < 25; i++) {
     const c = document.createElement('div');
     c.className = 'cell';
-    c.addEventListener('click',       () => onCell(i));
+    c.dataset.idx = i;
+    c.addEventListener('click',       () => { if (dragSuppressClick) { dragSuppressClick = false; return; } onCell(i); });
+    c.addEventListener('mousedown',   e  => onDragStart(e, i));
     c.addEventListener('contextmenu', e  => { e.preventDefault(); sellCell(i); });
     g.appendChild(c);
   }
@@ -329,6 +347,70 @@ function sellCell(i) {
   score += d.value;
   toast(`${d.emoji} Sold ${d.name}  +$${d.value}`);
   renderGrid(); checkShift(); updateUI();
+}
+
+// ── DRAG ──────────────────────────────────────────────────────────────────────
+
+let _dragX0, _dragY0;
+
+function onDragStart(e, i) {
+  if (!board[i] || e.button !== 0) return;
+  e.preventDefault();
+  dragFrom = i;
+  dragging  = false;
+  _dragX0 = e.clientX;
+  _dragY0 = e.clientY;
+}
+
+function onDragMove(e) {
+  if (dragFrom < 0) return;
+  const dist = Math.hypot(e.clientX - _dragX0, e.clientY - _dragY0);
+  if (!dragging && dist > 5) {
+    dragging = true;
+    // build ghost
+    const d = ITEMS[board[dragFrom].type];
+    dragGhost = document.createElement('div');
+    dragGhost.className = 'drag-ghost';
+    dragGhost.textContent = d.emoji;
+    document.body.appendChild(dragGhost);
+    // dim source
+    document.querySelectorAll('.cell')[dragFrom].classList.add('drag-src');
+  }
+  if (dragging && dragGhost) {
+    dragGhost.style.left = (e.clientX - 28) + 'px';
+    dragGhost.style.top  = (e.clientY - 28) + 'px';
+  }
+}
+
+function onDragEnd(e) {
+  if (dragFrom < 0) return;
+  if (dragging) {
+    dragSuppressClick = true;
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    const cells = document.querySelectorAll('.cell');
+    cells[dragFrom].classList.remove('drag-src');
+
+    // find target cell under cursor
+    const el   = document.elementFromPoint(e.clientX, e.clientY);
+    const cell = el?.closest('.cell');
+    const to   = cell ? +cell.dataset.idx : -1;
+
+    if (to >= 0 && to !== dragFrom && board[dragFrom]) {
+      if (!board[to]) {
+        // move to empty
+        board[to] = board[dragFrom];
+        board[dragFrom] = null;
+        sel = -1;
+        renderGrid();
+      } else if (board[to].type === board[dragFrom].type) {
+        // merge on drop
+        doMerge(dragFrom, to);
+      }
+      // else: occupied by different type — put back silently
+    }
+    dragging = false;
+  }
+  dragFrom = -1;
 }
 
 // ── MERGE ─────────────────────────────────────────────────────────────────────
@@ -656,6 +738,8 @@ function init() {
   renderRecipes();
   updateUI();
   schedOrder(6000);
+  document.addEventListener('mousemove', onDragMove);
+  document.addEventListener('mouseup',   onDragEnd);
   requestAnimationFrame(tick);
 }
 
