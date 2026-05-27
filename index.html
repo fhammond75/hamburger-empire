@@ -394,14 +394,16 @@ function onDragEnd(e) {
   if (dragFrom < 0) return;
   if (dragging) {
     dragSuppressClick = true;
-    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    // hide ghost FIRST so it doesn't block elementFromPoint
+    if (dragGhost) { dragGhost.style.visibility = 'hidden'; }
     const cells = document.querySelectorAll('.cell');
     cells[dragFrom].classList.remove('drag-src');
 
-    // find target cell under cursor
+    // find target cell under cursor (ghost is hidden so this works correctly)
     const el   = document.elementFromPoint(e.clientX, e.clientY);
     const cell = el?.closest('.cell');
     const to   = cell ? +cell.dataset.idx : -1;
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
 
     if (to >= 0 && to !== dragFrom && board[dragFrom]) {
       if (!board[to]) {
