@@ -58,22 +58,41 @@
       transition: border-color 0.12s, background 0.12s;
       user-select: none; overflow: hidden;
     }
-    .cell:hover { border-color: #ff8800; background: #220e00; }
-    .cell.sel { border-color: #ff8800; background: #2a1200; box-shadow: inset 0 0 10px #ff880033; }
-    .cell.merge-target { border-color: #44ff88; background: #001a08; animation: gpulse 0.9s infinite; }
+    /* tier border colors */
+    .cell.t1 { border-color: #5a3a1a; }
+    .cell.t2 { border-color: #2277cc; background: #080e1a; }
+    .cell.t3 { border-color: #9933cc; background: #0e0816; }
+    .cell.t4 { border-color: #ddaa00; background: #141000; box-shadow: inset 0 0 14px #ddaa0022; }
+
+    .cell:hover { border-color: #ff8800 !important; background: #220e00 !important; }
+    .cell.sel { border-color: #ff8800 !important; background: #2a1200 !important; box-shadow: inset 0 0 10px #ff880033 !important; }
+    .cell.merge-target { border-color: #44ff88 !important; background: #001a08 !important; animation: gpulse 0.9s infinite; }
     @keyframes gpulse { 0%,100% { box-shadow: inset 0 0 0 #0000; } 50% { box-shadow: inset 0 0 10px #44ff8840; } }
 
     .item-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; pointer-events: none; }
     .i-em { font-size: 2.1rem; line-height: 1.1; }
     .i-nm { font-size: 0.46rem; color: #cc9944; text-align: center; padding: 0 2px; line-height: 1.2; }
+
+    /* tier badge bottom-left */
+    .tier-badge {
+      position: absolute; bottom: 4px; left: 5px;
+      font-size: 0.58rem; font-weight: bold; pointer-events: none;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .t1 .tier-badge { color: #7a5a2a; }
+    .t2 .tier-badge { color: #4499ee; }
+    .t3 .tier-badge { color: #bb55ee; }
+    .t4 .tier-badge { color: #ffcc00; }
+
+    /* merge hint top-right */
     .merge-hint {
       position: absolute; top: 3px; right: 3px;
       display: flex; align-items: center; gap: 1px;
       pointer-events: none; line-height: 1;
     }
-    .merge-hint .mh-arrow { font-size: 0.5rem; color: #ff8800; }
-    .merge-hint .mh-next  { font-size: 0.95rem; }
-    .merge-hint .mh-max   { font-size: 0.5rem; color: #ffcc44; font-weight: bold; background: #2a1200; border-radius: 4px; padding: 1px 3px; }
+    .merge-hint .mh-arrow { font-size: 0.45rem; color: #886633; }
+    .merge-hint .mh-next  { font-size: 0.9rem; }
+    .merge-hint .mh-max   { font-size: 0.5rem; color: #ffcc44; font-weight: bold; background: #2a1800; border-radius: 4px; padding: 1px 3px; }
 
     #action-bar { display: flex; gap: 8px; min-height: 34px; }
     .abtn {
@@ -296,12 +315,22 @@ function renderGrid() {
   cells.forEach((c, i) => {
     c.innerHTML = '';
     c.className = 'cell';
+    const item = board[i];
+    if (item) c.classList.add('t' + (ITEMS[item.type].tier + 1));
     if (i === sel) c.classList.add('sel');
     else if (selType >= 0 && board[i] && board[i].type === selType) c.classList.add('merge-target');
 
-    const item = board[i];
     if (!item) return;
     const d = ITEMS[item.type];
+
+    // tier badge bottom-left
+    const TIER_LABELS = ['', '★★', '★★★', '★★★★'];
+    const TIER_NAMES  = ['Lvl 1', 'Lvl 2', 'Lvl 3', 'MAX'];
+    const badge = document.createElement('div'); badge.className = 'tier-badge';
+    badge.textContent = TIER_NAMES[d.tier];
+    c.appendChild(badge);
+
+    // merge hint top-right
     const hint = document.createElement('div'); hint.className = 'merge-hint';
     if (d.tier < 3) {
       const next = ITEMS[item.type + 1];
