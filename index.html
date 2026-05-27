@@ -241,8 +241,11 @@ let orders = [], oid = 1;
 let cooks = 0, cashiers = 0;
 const discovered = new Set();
 
-let bsCool = 0;
-const BS_MAX = 1500;
+let bsCharges = 30;      // clicks remaining before cooldown
+let bsCool    = 0;       // ms remaining in cooldown
+const BS_FIRST   = 30;   // charges in first batch
+const BS_REFILL  = 15;   // charges on each refill
+const BS_COOL_MS = 10000; // cooldown between batches
 
 let cookTimer = 0, cashierTimer = 0;
 const COOK_MS = 7000, CASHIER_MS = 4000;
@@ -350,23 +353,29 @@ function buildGenerator() {
   g.innerHTML = `
     <div class="g-em">🧺</div>
     <div class="g-nm">Veggie Basket</div>
-    <div class="g-cd" id="bscd">Ready!</div>
-    <div class="g-bar"><div class="g-fill" id="bsfill" style="width:100%"></div></div>
+    <div class="g-cd" id="bscd"><span id="bs-charges">30</span> left</div>
+    <div class="g-bar"><div class="g-fill" id="bsfill" style="width:0%"></div></div>
   `;
   g.addEventListener('click', useBasket);
   wrap.appendChild(g);
 }
 
 function useBasket() {
-  if (bsCool > 0) { toast('⏳ Cooling down…'); return; }
+  if (bsCool > 0) { toast(`⏳ New basket in ${(bsCool/1000).toFixed(1)}s…`); return; }
+  if (bsCharges <= 0) return;
   const empties = board.reduce((a, v, i) => { if (!v) a.push(i); return a; }, []);
   if (!empties.length) { toast('😱 Board full! Merge or sell something.'); return; }
   const type = T0[Math.floor(Math.random() * T0.length)];
   const idx  = empties[Math.floor(Math.random() * empties.length)];
   board[idx] = { type };
   discover(type);
-  bsCool = BS_MAX;
-  renderGrid(); updateUI();
+  bsCharges--;
+  if (bsCharges <= 0) {
+    bsCool = BS_COOL_MS;
+    toast('🧺 Basket empty! New one incoming…');
+  }
+  updateBasketUI();
+  renderGrid();
 }
 
 // ── DISCOVERY ─────────────────────────────────────────────────────────────────
@@ -570,6 +579,23 @@ function renderRecipes() {
   }
 }
 
+function updateBasketUI() {
+  const cooling = bsCool > 0;
+  const gen = document.getElementById('gen-basket');
+  const cd  = document.getElementById('bscd');
+  const bar = document.getElementById('bsfill');
+  if (!gen) return;
+  gen.classList.toggle('cooling', cooling);
+  if (cooling) {
+    const pct = (1 - bsCool / BS_COOL_MS) * 100;
+    bar.style.width = pct + '%';
+    cd.innerHTML = `New basket in ${(bsCool/1000).toFixed(1)}s`;
+  } else {
+    bar.style.width = '0%';
+    cd.innerHTML = `<span id="bs-charges">${bsCharges}</span> left`;
+  }
+}
+
 // ── TICK ──────────────────────────────────────────────────────────────────────
 
 function tick(ts) {
@@ -577,10 +603,11 @@ function tick(ts) {
 
   if (bsCool > 0) {
     bsCool = Math.max(0, bsCool - dt);
-    const pct = (1 - bsCool / BS_MAX) * 100;
-    document.getElementById('bsfill').style.width = pct + '%';
-    document.getElementById('bscd').textContent = bsCool > 0 ? `${(bsCool/1000).toFixed(1)}s` : 'Ready!';
-    document.getElementById('gen-basket').classList.toggle('cooling', bsCool > 0);
+    if (bsCool === 0) {
+      bsCharges = BS_REFILL;
+      toast(`🧺 New basket ready!  ${BS_REFILL} items`);
+    }
+    updateBasketUI();
   }
 
   const now = Date.now();
