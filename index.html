@@ -24,9 +24,10 @@
     /* LEFT */
     #left-panel { width: 185px; display: flex; flex-direction: column; gap: 12px; padding-top: 48px; }
 
-    #shift-row { display: flex; justify-content: space-between; font-size: 0.71rem; color: #cc9944; margin-bottom: 5px; }
-    #shift-bar-wrap { background: #0e0400; border-radius: 4px; height: 10px; overflow: hidden; }
-    #shift-bar { height: 100%; border-radius: 4px; background: #44aa44; transition: width 0.3s; }
+    #shift-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #ffcc44; font-weight: bold; margin-bottom: 6px; }
+    #shift-bar-wrap { background: #0e0400; border: 1px solid #3d1800; border-radius: 6px; height: 18px; overflow: hidden; position: relative; }
+    #shift-bar { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #2a8a2a, #44ee44); transition: width 0.3s; }
+    #shift-bar-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; color: #fff; text-shadow: 0 1px 3px #000; pointer-events: none; }
 
     #recipe-list { overflow-y: auto; max-height: 400px; }
     #recipe-list::-webkit-scrollbar { width: 4px; }
@@ -137,9 +138,17 @@
     .oc-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
     .oc-cust { font-size: 1.35rem; }
     .oc-items { display: flex; gap: 3px; flex-wrap: wrap; }
-    .oc-itm { font-size: 1.15rem; background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 4px; position: relative; }
+    .oc-itm { font-size: 1.15rem; background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 4px 8px; position: relative; border: 1px solid transparent; }
     .oc-itm.done { opacity: 0.25; }
     .oc-itm.done::after { content: '✓'; position: absolute; top: -2px; right: -3px; font-size: 0.55rem; color: #44ff88; }
+    .oc-itm.ot2 { border-color: #2277cc55; }
+    .oc-itm.ot3 { border-color: #9933cc55; }
+    .oc-itm.ot4 { border-color: #ddaa0055; }
+    .oc-tier { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; font-size: 0.42rem; font-weight: bold; line-height: 1; }
+    .oc-itm.ot1 .oc-tier { color: #7a5a2a; }
+    .oc-itm.ot2 .oc-tier { color: #4499ee; }
+    .oc-itm.ot3 .oc-tier { color: #bb55ee; }
+    .oc-itm.ot4 .oc-tier { color: #ffcc00; }
     .oc-stars { margin-left: auto; font-size: 0.62rem; white-space: nowrap; }
     .oc-secs { font-size: 0.59rem; color: #664422; margin-bottom: 3px; }
     .oc-bar { height: 4px; border-radius: 2px; transition: width 0.25s, background 0.5s; }
@@ -154,6 +163,11 @@
     .sbtn:hover:not(:disabled) { background: #2a1200; }
     .sbtn:disabled { opacity: 0.32; cursor: default; }
     .s-cost { color: #ccaa00; font-size: 0.69rem; }
+    .cook-bar-wrap { height: 3px; background: #0e0400; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .cook-bar-fill { height: 100%; border-radius: 2px; background: #44cc44; transition: width 0.2s linear; width: 0%; }
+    .cook-status { font-size: 0.58rem; color: #44cc44; margin-top: 2px; }
+    @keyframes cook-working { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .cook-active { animation: cook-working 0.8s infinite; }
 
     #popups {
       position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
@@ -185,7 +199,10 @@
   <div class="panel">
     <h2>📊 Shift Progress</h2>
     <div id="shift-row"><span id="shift-lbl">Shift 1</span><span id="shift-amt">$0 / $50</span></div>
-    <div id="shift-bar-wrap"><div id="shift-bar" style="width:0%"></div></div>
+    <div id="shift-bar-wrap">
+      <div id="shift-bar" style="width:0%"></div>
+      <div id="shift-bar-label">$0 / $50</div>
+    </div>
   </div>
   <div class="panel">
     <h2>📖 Recipe Book</h2>
@@ -213,10 +230,14 @@
   </div>
   <div class="panel">
     <h2>👥 Staff</h2>
-    <button class="sbtn" id="btn-cook"    onclick="hireStaff('cook')">
+    <button class="sbtn" id="btn-cook" onclick="hireStaff('cook')">
       <span>👨‍🍳 Line Cook <small id="cook-ct">(0)</small></span>
       <span class="s-cost" id="cook-cost-lbl">$100</span>
     </button>
+    <div id="cook-activity" style="display:none;padding:0 2px 4px">
+      <div class="cook-bar-wrap"><div class="cook-bar-fill" id="cook-bar"></div></div>
+      <div class="cook-status" id="cook-status">⚡ Merging…</div>
+    </div>
     <button class="sbtn" id="btn-cashier" onclick="hireStaff('cashier')">
       <span>💁 Cashier <small id="cashier-ct">(0)</small></span>
       <span class="s-cost" id="cashier-cost-lbl">$150</span>
@@ -564,7 +585,8 @@ function renderOrders() {
 
     const itemsHtml = o.wants.map(w => {
       const d = ITEMS[w.type];
-      return `<div class="oc-itm${w.served?' done':''}" title="${d.name}">${d.emoji}</div>`;
+      const tierLabel = ['Lvl 1','Lvl 2','Lvl 3','MAX'][d.tier];
+      return `<div class="oc-itm ot${d.tier+1}${w.served?' done':''}" title="${d.name} (${tierLabel})">${d.emoji}<span class="oc-tier">${tierLabel}</span></div>`;
     }).join('');
 
     card.innerHTML = `
@@ -738,6 +760,19 @@ function tick(ts) {
   doCookTick(dt);
   doCashierTick(dt);
 
+  // cook activity bar
+  if (cooks > 0) {
+    const cookPct = Math.min(100, cookTimer / COOK_MS * 100);
+    const bar = document.getElementById('cook-bar');
+    const status = document.getElementById('cook-status');
+    if (bar) bar.style.width = cookPct + '%';
+    if (status) {
+      const hasMatch = (() => { const g = {}; board.forEach(item => { if (item) g[item.type] = (g[item.type]||0)+1; }); return Object.entries(g).some(([t,n]) => n >= 2 && ITEMS[+t].tier < 3); })();
+      status.textContent = hasMatch ? '⚡ Merging soon…' : '👀 Looking for pairs…';
+      status.className = 'cook-status' + (hasMatch ? ' cook-active' : '');
+    }
+  }
+
   if (ts - ordersTs > 250) { renderOrders(); ordersTs = ts; }
 
   requestAnimationFrame(tick);
@@ -748,9 +783,12 @@ function tick(ts) {
 function updateUI() {
   document.getElementById('coins-val').textContent = `$${coins}`;
   document.getElementById('score-line').textContent = `Score: ${score}`;
-  document.getElementById('shift-lbl').textContent  = `Shift ${shiftNum}`;
-  document.getElementById('shift-amt').textContent  = `$${shiftSales} / $${shiftGoal}`;
-  document.getElementById('shift-bar').style.width  = Math.min(100, shiftSales / shiftGoal * 100) + '%';
+  document.getElementById('shift-lbl').textContent      = `Shift ${shiftNum}`;
+  document.getElementById('shift-amt').textContent      = `$${shiftSales} / $${shiftGoal}`;
+  const shiftPct = Math.min(100, shiftSales / shiftGoal * 100);
+  document.getElementById('shift-bar').style.width      = shiftPct + '%';
+  document.getElementById('shift-bar-label').textContent = `$${shiftSales} / $${shiftGoal}`;
+  document.getElementById('cook-activity').style.display = cooks > 0 ? 'block' : 'none';
   document.getElementById('cook-ct').textContent    = `(${cooks})`;
   document.getElementById('cashier-ct').textContent = `(${cashiers})`;
   const cc = cookCost(), cac = cashierCost();
