@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hamburger Empire</title>
@@ -8,1409 +7,632 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background: #110600; color: #fff;
+      background: #110600; color: #e8d0a0;
       font-family: 'Segoe UI', sans-serif;
       display: flex; justify-content: center; align-items: flex-start;
-      min-height: 100vh; padding: 18px; gap: 18px;
+      min-height: 100vh; padding: 16px; gap: 14px;
     }
-    #game-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    h1 { font-size: 1.5rem; color: #ffcc44; text-shadow: 0 0 14px #ff8800; letter-spacing: 2px; }
-    #canvas { border: 2px solid #ff8800; border-radius: 8px; background: #0c0300;
-              display: block; box-shadow: 0 0 28px #ff440033; cursor: crosshair; }
-    #hint { color: #664422; font-size: 0.78rem; }
-
-    #left-panel { width: 180px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
-    #sidebar { width: 215px; display: flex; flex-direction: column; gap: 10px; padding-top: 44px; }
-    .panel { background: #1e0c00; border: 1px solid #8b4400; border-radius: 8px; padding: 11px; }
-    .panel h2 { font-size: 0.75rem; color: #ffcc44; text-transform: uppercase;
-                letter-spacing: 1px; margin-bottom: 8px; }
-
-    #hearts-row { font-size: 1.4rem; letter-spacing: 3px; }
-    #score-val  { font-size: 1.8rem; color: #ff8800; font-weight: bold; line-height: 1; }
-    #best-val   { font-size: 0.72rem; color: #664422; margin-top: 3px; }
-    #coins-val  { font-size: 0.8rem; color: #ccaa00; margin-top: 5px; }
-    #day-val    { font-size: 0.95rem; color: #ffaa44; }
-    #served-val { font-size: 0.72rem; color: #664422; margin-top: 3px; }
-
-    #cap-row { display: flex; justify-content: space-between; font-size: 0.78rem; color: #cc9944; margin-bottom: 5px; }
-    #cap-bar-wrap { background: #1a0800; border-radius: 4px; height: 7px; margin-bottom: 7px; overflow: hidden; }
-    #cap-bar { height: 100%; border-radius: 4px; transition: width 0.2s, background 0.3s; }
-
-    .upg-btn {
-      width: 100%; background: #2a1200; border: 1px solid #6b3400; border-radius: 6px;
-      color: #fff; padding: 6px 9px; font-size: 0.78rem; cursor: pointer;
-      text-align: left; display: flex; justify-content: space-between; align-items: center;
-      transition: background 0.15s; margin-bottom: 5px;
+    .panel {
+      background: #1a0900; border: 1px solid #8b4400;
+      border-radius: 10px; padding: 12px;
     }
-    .upg-btn:last-child { margin-bottom: 0; }
-    .upg-btn:hover:not(:disabled) { background: #3d1a00; }
-    .upg-btn:disabled { opacity: 0.3; cursor: default; }
-    .upg-btn .cost { color: #ccaa00; font-size: 0.7rem; }
+    .panel h2 {
+      font-size: 0.68rem; color: #ffcc44;
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 9px;
+    }
 
+    /* LEFT */
+    #left-panel { width: 185px; display: flex; flex-direction: column; gap: 12px; padding-top: 48px; }
 
-    #chain-list { display: flex; flex-direction: column; gap: 2px; }
-    .chain-row { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; padding: 2px 0; }
-    .chain-emoji { font-size: 1rem; width: 20px; text-align: center; }
-    .chain-name  { flex: 1; }
-    .chain-sold  { font-size: 0.68rem; color: #886633; min-width: 28px; text-align: right; }
-    .chain-row.locked { opacity: 0.28; filter: grayscale(1); }
-    .chain-row.locked .chain-name { color: #442200; }
-    .chain-arrow { font-size: 0.5rem; color: #332200; padding-left: 4px; }
-    .k-chip { background:#2a1400; border:1px solid #6b3400; border-radius:5px;
-              padding:3px 6px; font-size:0.78rem; display:flex; align-items:center; gap:3px; }
-    .k-chip span { color:#ccaa00; font-size:0.68rem; }
+    #shift-row { display: flex; justify-content: space-between; font-size: 0.71rem; color: #cc9944; margin-bottom: 5px; }
+    #shift-bar-wrap { background: #0e0400; border-radius: 4px; height: 10px; overflow: hidden; }
+    #shift-bar { height: 100%; border-radius: 4px; background: #44aa44; transition: width 0.3s; }
+
+    #recipe-list { overflow-y: auto; max-height: 400px; }
+    #recipe-list::-webkit-scrollbar { width: 4px; }
+    #recipe-list::-webkit-scrollbar-track { background: #0e0400; }
+    #recipe-list::-webkit-scrollbar-thumb { background: #6b3400; border-radius: 2px; }
+    .fam-label { font-size: 0.63rem; color: #ffcc44; text-transform: uppercase; letter-spacing: 1px; padding: 5px 0 2px; border-bottom: 1px solid #2a1000; margin-bottom: 2px; }
+    .r-row { display: flex; align-items: center; gap: 5px; padding: 3px 0; font-size: 0.7rem; color: #cc9944; }
+    .r-row.unknown { opacity: 0.22; }
+    .r-emoji { font-size: 1rem; width: 22px; text-align: center; }
+    .r-val { margin-left: auto; font-size: 0.6rem; color: #664422; }
+
+    /* CENTER */
+    #center { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    h1 { font-size: 1.55rem; color: #ffcc44; text-shadow: 0 0 16px #ff8800; letter-spacing: 2px; }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 86px);
+      grid-template-rows: repeat(5, 86px);
+      gap: 5px;
+      background: #0e0400; border: 2px solid #8b4400;
+      border-radius: 10px; padding: 9px;
+      box-shadow: 0 0 28px #ff440020;
+    }
+    .cell {
+      background: #160700; border: 1.5px solid #3d1800;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative;
+      transition: border-color 0.12s, background 0.12s;
+      user-select: none; overflow: hidden;
+    }
+    .cell:hover { border-color: #ff8800; background: #220e00; }
+    .cell.sel { border-color: #ff8800; background: #2a1200; box-shadow: inset 0 0 10px #ff880033; }
+    .cell.merge-target { border-color: #44ff88; background: #001a08; animation: gpulse 0.9s infinite; }
+    @keyframes gpulse { 0%,100% { box-shadow: inset 0 0 0 #0000; } 50% { box-shadow: inset 0 0 10px #44ff8840; } }
+
+    .item-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; pointer-events: none; }
+    .i-em { font-size: 2.1rem; line-height: 1.1; }
+    .i-nm { font-size: 0.46rem; color: #cc9944; text-align: center; padding: 0 2px; line-height: 1.2; }
+    .tier-pip {
+      position: absolute; top: 4px; right: 4px;
+      background: #ff8800; color: #000; font-size: 0.52rem; font-weight: bold;
+      width: 15px; height: 15px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; pointer-events: none;
+    }
+
+    #action-bar { display: flex; gap: 8px; min-height: 34px; }
+    .abtn {
+      background: #2a1200; border: 1px solid #8b4400; border-radius: 8px;
+      color: #ffcc44; padding: 5px 13px; font-size: 0.75rem;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .abtn:hover { background: #3d1a00; }
+    .abtn.sell { border-color: #44aa44; color: #44ff88; }
+
+    #generators { display: flex; gap: 10px; }
+    .gen {
+      background: #1a0900; border: 2px solid #8b4400; border-radius: 10px;
+      padding: 9px 16px; display: flex; flex-direction: column; align-items: center;
+      gap: 3px; cursor: pointer; min-width: 108px;
+      transition: border-color 0.12s, transform 0.1s;
+    }
+    .gen:hover:not(.cooling) { border-color: #ff8800; transform: translateY(-2px); }
+    .gen.cooling { opacity: 0.55; cursor: not-allowed; }
+    .g-em { font-size: 2rem; }
+    .g-nm { font-size: 0.7rem; color: #ffcc44; }
+    .g-cd { font-size: 0.6rem; color: #664422; height: 13px; }
+    .g-bar { width: 78px; height: 4px; background: #1a0800; border-radius: 2px; overflow: hidden; }
+    .g-fill { height: 100%; background: #ff8800; border-radius: 2px; }
+
+    #hint { font-size: 0.64rem; color: #664422; }
+
+    /* RIGHT */
+    #right-panel { width: 210px; display: flex; flex-direction: column; gap: 12px; padding-top: 48px; }
+
+    #coins-val { font-size: 1.55rem; color: #ffcc44; font-weight: bold; }
+    #score-line { font-size: 0.7rem; color: #664422; margin-top: 2px; }
+
+    .order-card {
+      background: #1e0a00; border: 1.5px solid #6b3400;
+      border-radius: 8px; padding: 8px; margin-bottom: 8px;
+      cursor: pointer; transition: border-color 0.12s;
+    }
+    .order-card:last-child { margin-bottom: 0; }
+    .order-card:hover:not(.expired) { border-color: #ff8800; }
+    .order-card.expired { border-color: #661111; opacity: 0.55; cursor: default; }
+    .oc-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+    .oc-cust { font-size: 1.35rem; }
+    .oc-items { display: flex; gap: 3px; flex-wrap: wrap; }
+    .oc-itm { font-size: 1.15rem; background: rgba(255,255,255,0.06); border-radius: 4px; padding: 2px 4px; position: relative; }
+    .oc-itm.done { opacity: 0.25; }
+    .oc-itm.done::after { content: '✓'; position: absolute; top: -2px; right: -3px; font-size: 0.55rem; color: #44ff88; }
+    .oc-stars { margin-left: auto; font-size: 0.62rem; white-space: nowrap; }
+    .oc-secs { font-size: 0.59rem; color: #664422; margin-bottom: 3px; }
+    .oc-bar { height: 4px; border-radius: 2px; transition: width 0.25s, background 0.5s; }
+
+    .sbtn {
+      width: 100%; background: #1a0900; border: 1px solid #6b3400;
+      border-radius: 7px; color: #e8d0a0; padding: 7px 9px; font-size: 0.74rem;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      transition: background 0.12s; margin-bottom: 6px;
+    }
+    .sbtn:last-child { margin-bottom: 0; }
+    .sbtn:hover:not(:disabled) { background: #2a1200; }
+    .sbtn:disabled { opacity: 0.32; cursor: default; }
+    .s-cost { color: #ccaa00; font-size: 0.69rem; }
+
+    #popups {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column-reverse; gap: 5px;
+      pointer-events: none; z-index: 999;
+    }
+    .toast {
+      background: #1e0900ee; border: 1px solid #ff8800; border-radius: 20px;
+      padding: 5px 14px; font-size: 0.78rem; color: #ffcc44; white-space: nowrap;
+      animation: tin 0.2s ease, tout 0.3s ease 1.8s forwards;
+    }
+    @keyframes tin  { from { opacity: 0; transform: translateY(8px) scale(0.9); } to { opacity: 1; transform: none; } }
+    @keyframes tout { to   { opacity: 0; transform: translateY(-6px); } }
   </style>
 </head>
 <body>
 
 <div id="left-panel">
   <div class="panel">
-    <h2>Lives</h2>
-    <div id="hearts-row">❤️❤️❤️</div>
+    <h2>📊 Shift Progress</h2>
+    <div id="shift-row"><span id="shift-lbl">Shift 1</span><span id="shift-amt">$0 / $50</span></div>
+    <div id="shift-bar-wrap"><div id="shift-bar" style="width:0%"></div></div>
   </div>
-
   <div class="panel">
-    <h2>Score</h2>
-    <div id="score-val">0</div>
-    <div id="best-val">Best: 0</div>
-    <div id="coins-val">🪙 0 coins</div>
-  </div>
-
-  <div class="panel">
-    <h2>Shift</h2>
-    <div id="day-val">Day 1</div>
-    <div id="served-val">0 orders served</div>
-  </div>
-
-  <div class="panel">
-    <h2>Merge Chain</h2>
-    <div id="chain-list"></div>
+    <h2>📖 Recipe Book</h2>
+    <div id="recipe-list"></div>
   </div>
 </div>
 
-<div id="game-wrap">
+<div id="center">
   <h1>🍔 Hamburger Empire</h1>
-  <canvas id="canvas" width="560" height="680"></canvas>
-  <div id="hint">Click arena → drop ingredient &nbsp;·&nbsp; Items auto-serve matched orders &nbsp;·&nbsp; Click non-order item → select, then 🗑</div>
+  <div id="grid"></div>
+  <div id="action-bar"></div>
+  <div id="generators"></div>
+  <div id="hint">Click item → click match to merge &nbsp;·&nbsp; Right-click to sell</div>
 </div>
 
-<div id="sidebar">
+<div id="right-panel">
   <div class="panel">
-    <h2>🔀 Merge Board</h2>
-    <div id="cap-row"><span id="cap-label">0 / 12</span><span id="cap-pct">0%</span></div>
-    <div id="cap-bar-wrap"><div id="cap-bar"></div></div>
-    <button class="upg-btn" id="btn-expand" onclick="buyExpand()">
-      <span>Expand +4 slots</span><span class="cost" id="expand-cost">🪙 30</span>
-    </button>
+    <h2>💰 Resources</h2>
+    <div id="coins-val">$0</div>
+    <div id="score-line">Score: 0</div>
   </div>
-
-  <div class="panel" id="panel-kitchen" style="display:none">
-    <h2>🍳 Kitchen</h2>
-    <div id="kitchen-hint" style="font-size:0.72rem;color:#664422;margin-bottom:6px">Select a board item then store it here for orders.</div>
-    <div id="kitchen-stock" style="display:flex;flex-wrap:wrap;gap:5px;min-height:28px;margin-bottom:6px"></div>
-    <button class="upg-btn" id="btn-store" onclick="storeSelected()" disabled>
-      <span id="store-label">📦 Store Selected Item</span>
-      <span class="cost" id="store-info">select item first</span>
-    </button>
-  </div>
-
   <div class="panel">
-    <h2>🥒 Auto Dropper</h2>
-    <div id="autodrop-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">Off</div>
-    <button class="upg-btn" id="btn-autodrop-unlock" onclick="buyAutoDropUnlock()">
-      <span id="autodrop-unlock-label">Unlock Auto Drop</span>
-      <span class="cost" id="autodrop-unlock-cost">🪙 50</span>
-    </button>
-    <button class="upg-btn" id="btn-autodrop-speed" onclick="buyAutoDropSpeed()" style="margin-top:4px">
-      <span id="autodrop-speed-label">⚡ Speed +0.5s faster</span>
-      <span class="cost" id="autodrop-speed-cost">🪙 20</span>
-    </button>
-    <div style="margin-top:8px;border-top:1px solid #5c3010;padding-top:6px">
-      <div id="lucky-info" style="font-size:0.75rem;color:#448844;margin-bottom:4px">🍀 Lucky drop: 0%</div>
-      <button class="upg-btn" id="btn-lucky" onclick="buyLucky()">
-        <span id="lucky-label">🍀 +3% Lucky Chance</span>
-        <span class="cost" id="lucky-cost">🪙 30</span>
-      </button>
-    </div>
+    <h2>🛎️ Orders</h2>
+    <div id="orders-list"><div style="color:#664422;font-size:0.74rem;text-align:center;padding:8px 0">Customers incoming…</div></div>
   </div>
-
-  <div class="panel" id="panel-recipes">
-    <h2>📋 Recipes</h2>
-    <div id="recipes-hint" style="font-size:0.72rem;color:#664422;margin-bottom:6px">Discover items by merging to unlock their recipe</div>
-    <div id="recipes-list"></div>
-  </div>
-
   <div class="panel">
-    <h2>👨‍🍳 Staff</h2>
-    <div id="cook-info" style="font-size:0.75rem;color:#664422;margin-bottom:5px">No cooks hired</div>
-    <button class="upg-btn" id="btn-cook" onclick="hireCook()">
-      <span id="cook-label">Hire Line Cook</span>
-      <span class="cost" id="cook-cost">🪙 150</span>
+    <h2>👥 Staff</h2>
+    <button class="sbtn" id="btn-cook"    onclick="hireStaff('cook')">
+      <span>👨‍🍳 Line Cook <small id="cook-ct">(0)</small></span>
+      <span class="s-cost" id="cook-cost-lbl">$100</span>
     </button>
-    <div style="font-size:0.68rem;color:#554433;margin-top:4px" id="cook-desc">Auto-merges 1 pair every 18s</div>
-    <button class="upg-btn" id="btn-autostock" onclick="buyAutoStock()" style="margin-top:6px">
-      <span id="autostock-label">📦 Enable Kitchen Auto-Stock</span>
-      <span class="cost" id="autostock-cost">🪙 120</span>
-    </button>
-  </div>
-
-  <div class="panel">
-    <h2>🧲 Emergency Magnet</h2>
-    <div id="magnet-pull-row" style="font-size:0.75rem;color:#aaddff;margin-bottom:4px">Pull: <span id="magnet-pull-val">0.45</span> / 1.50</div>
-    <button class="upg-btn" id="btn-magnet-upg" onclick="upgradeMagnetPull()" style="margin-bottom:6px">
-      <span id="magnet-upg-label">↑ Upgrade Pull +0.05</span>
-      <span class="cost" id="magnet-upg-cost">🪙 30</span>
-    </button>
-    <div style="border-top:1px solid #5c3010;padding-top:6px">
-      <div id="magnet-uses-row" style="font-size:0.8rem;color:#aaddff;margin-bottom:4px">Uses: <strong id="magnet-uses">0</strong> / 2</div>
-      <button class="upg-btn" id="btn-magnet-buy" onclick="buyMagnet()">
-        <span id="magnet-buy-label">Buy Use #1</span>
-        <span class="cost" id="magnet-buy-cost">🪙 250</span>
-      </button>
-      <button class="upg-btn" id="btn-magnet" onclick="activateMagnet()" style="margin-top:4px">
-        <span>⚡ Activate</span><span class="cost" id="magnet-cd">No uses</span>
-      </button>
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2>💨 Clear Junk</h2>
-    <button class="upg-btn" id="btn-clear" onclick="buyClear()">
-      <span>Remove non-orders</span><span class="cost">🪙 50</span>
+    <button class="sbtn" id="btn-cashier" onclick="hireStaff('cashier')">
+      <span>💁 Cashier <small id="cashier-ct">(0)</small></span>
+      <span class="s-cost" id="cashier-cost-lbl">$150</span>
     </button>
   </div>
 </div>
+
+<div id="popups"></div>
 
 <script>
-// ─── Canvas ───────────────────────────────────────────────────────────────────
-const canvas = document.getElementById('canvas');
-const ctx    = canvas.getContext('2d');
-const W = canvas.width;   // 560
-const H = canvas.height;  // 680
+// ── DATA ─────────────────────────────────────────────────────────────────────
 
-const ORDER_H   = 130;   // taller strip for combo orders
-const ARENA_TOP = ORDER_H;
-const TRASH_SZ  = 68;
-const TRASH_X   = W - TRASH_SZ - 8;
-const TRASH_Y   = H - TRASH_SZ - 8;
+const FAMILIES = [
+  { name: 'Pickle',  emoji: '🥒' },
+  { name: 'Tomato',  emoji: '🍅' },
+  { name: 'Lettuce', emoji: '🥬' },
+  { name: 'Onion',   emoji: '🧅' },
+];
 
-// ─── Items ────────────────────────────────────────────────────────────────────
+// 4 families × 4 tiers; index = family*4 + tier
 const ITEMS = [
-  { emoji: '🥒', name: 'Pickle',     radius: 20, value:    5 },
-  { emoji: '🍅', name: 'Tomato',     radius: 25, value:   12 },
-  { emoji: '🥬', name: 'Lettuce',    radius: 30, value:   25 },
-  { emoji: '🧅', name: 'Onion',      radius: 35, value:   50 },
-  { emoji: '🥓', name: 'Bacon',      radius: 40, value:   80 },
-  { emoji: '🧀', name: 'Cheese',     radius: 45, value:  110 },
-  { emoji: '🥩', name: 'Patty',      radius: 50, value:  180 },
-  { emoji: '🍔', name: 'Burger',     radius: 57, value:  300 },
-  { emoji: '🍟', name: 'Fries',      radius: 63, value:  500 },
-  { emoji: '🥤', name: 'Shake',      radius: 69, value:  850 },
-  { emoji: '🎉', name: 'Value Meal', radius: 78, value: 1500 },
+  { name: 'Cucumber',      emoji: '🥒', family: 0, tier: 0, value: 2  },
+  { name: 'Dill Pickle',   emoji: '🥒', family: 0, tier: 1, value: 5  },
+  { name: 'Pickle Jar',    emoji: '🫙', family: 0, tier: 2, value: 12 },
+  { name: 'Relish',        emoji: '🌿', family: 0, tier: 3, value: 30 },
+
+  { name: 'Tomato',        emoji: '🍅', family: 1, tier: 0, value: 2  },
+  { name: 'Diced Tomato',  emoji: '🍅', family: 1, tier: 1, value: 5  },
+  { name: 'Tomato Paste',  emoji: '🥫', family: 1, tier: 2, value: 12 },
+  { name: 'Marinara',      emoji: '🍝', family: 1, tier: 3, value: 30 },
+
+  { name: 'Lettuce',       emoji: '🥬', family: 2, tier: 0, value: 2  },
+  { name: 'Shredded',      emoji: '🥬', family: 2, tier: 1, value: 5  },
+  { name: 'Salad Mix',     emoji: '🥗', family: 2, tier: 2, value: 12 },
+  { name: 'Garden Salad',  emoji: '🥗', family: 2, tier: 3, value: 30 },
+
+  { name: 'Onion',         emoji: '🧅', family: 3, tier: 0, value: 2  },
+  { name: 'Sliced Onion',  emoji: '🧅', family: 3, tier: 1, value: 5  },
+  { name: 'Caramel Onion', emoji: '🧅', family: 3, tier: 2, value: 12 },
+  { name: 'Onion Rings',   emoji: '🍱', family: 3, tier: 3, value: 30 },
 ];
 
-const CUSTOMERS = ['👴','👩','🧑','👶','👱','🧔','👸','🤠','🧕','👲'];
+const T0 = [0, 4, 8, 12];
+const CUSTS = ['👴','👵','👨','👩','🧑','👦','👧','🧔','👱','🧕'];
 
-// Order timer: 3-star window (30s) → 2-star window (20s) → 1-star window (10s) → fail
-const STAR3_MS = 30000;  // first 30s: 3 stars
-const STAR2_MS = 20000;  // next 20s:  2 stars
-const STAR1_MS = 10000;  // final 10s: 1 star → then life lost
-const ORDER_TOTAL_MS = STAR3_MS + STAR2_MS + STAR1_MS; // 60s total
+// ── STATE ─────────────────────────────────────────────────────────────────────
 
-// ─── Auto-dropper: two independent incremental upgrade tracks ─────────────────
-// Speed: unlock at 50 coins → 10s interval; each speed upgrade costs more and
-//        reduces interval by 0.5s, capped at 3s (14 upgrades possible)
-const AUTO_DROP_UNLOCK_COST = 50;
-const AUTO_DROP_BASE_MS     = 10000;
-const AUTO_DROP_STEP_MS     = 500;
-const AUTO_DROP_MIN_MS      = 250;
-function autoDropSpeedCost(n) { return Math.floor(20 * Math.pow(1.35, n)); }
-function autoDropInterval()   { return Math.max(AUTO_DROP_MIN_MS, AUTO_DROP_BASE_MS - autoDropSpeedLevel * AUTO_DROP_STEP_MS); }
+const board = new Array(25).fill(null); // null | { type: int }
+let sel = -1;
+let coins = 0, score = 0;
+let shiftNum = 1, shiftGoal = 50, shiftSales = 0;
+let orders = [], oid = 1;
+let cooks = 0, cashiers = 0;
+const discovered = new Set();
 
-// Lucky: separate track; each upgrade adds +3% chance, cap 45%
-const LUCKY_STEP_PCT = 3;
-const LUCKY_CAP_PCT  = 45;
-function luckyUpgradeCost(n) { return Math.floor(30 * Math.pow(1.4, n)); }
-function currentLuckyPct()   { return Math.min(LUCKY_CAP_PCT, luckyLevel * LUCKY_STEP_PCT); }
-const EXPAND_COSTS        = [30, 80, 200, 500];
+let bsCool = 0;
+const BS_MAX = 8000;
 
-const MAGNET_COSTS = [250, 500];
+let cookTimer = 0, cashierTimer = 0;
+const COOK_MS = 7000, CASHIER_MS = 4000;
 
-// Magnet pull upgrades: 0.45 base, +0.05 per level, max 1.5 (21 upgrades)
-// Levels 0-11 (0.45→1.00): cheap. Levels 12-21 (1.05→1.50): expensive.
-const MAGNET_PULL_BASE = 0.45;
-const MAGNET_PULL_STEP = 0.05;
-const MAGNET_PULL_MAX  = 1.50;
-function magnetPullValue()       { return Math.min(MAGNET_PULL_MAX, MAGNET_PULL_BASE + magnetPullLevel * MAGNET_PULL_STEP); }
-function magnetPullUpgradeCost(n){ return n < 11 ? Math.floor(30 * Math.pow(1.28, n)) : Math.floor(600 * Math.pow(1.45, n - 11)); }
+const S3 = 30000, S2 = 20000, S1 = 10000;
 
-// ─── Recipe cards: unlock customer orders for assembled menu items ─────────────
-// Tiers 0-6 (Pickle→Patty) are raw ingredients, orderable once discovered.
-// Tiers 7-10 (Burger→Value Meal) require a recipe card purchase first.
-const RECIPE_TIERS = [7, 8, 9, 10];
-const RECIPE_COSTS = [200, 500, 1200, 3000];
+let lastTs = performance.now();
+let ordersTs = 0;
+let orderTmr = null;
 
-// ─── Line Cooks: auto-merge one matching pair every COOK_INTERVAL ms each ─────
-const COOK_COST     = 150;
-const MAX_COOKS     = 3;
-const COOK_INTERVAL = 18000; // each cook merges a pair every 18s
-const COOK_AUTO_STOCK_COST = 120; // one-time upgrade to enable auto-stocking
+// ── GRID ──────────────────────────────────────────────────────────────────────
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let score        = 0;
-let best         = 0;
-let coins        = 0;
-let hearts       = 3;
-let maxHearts    = 3;
-let ordersServed = 0;
-let maxItems     = 12;
-let expandLevel  = 0;
-let highestMerge = 0;
-let gameOver     = false;
-let selectedItem = null;
-
-let magnetUsesLeft = 0;
-let magnetUsed     = 0;
-let magnetPullLevel = 0;
-let magnetActive   = false;
-let magnetEnd      = 0;
-
-let autoDropUnlocked   = false;
-let autoDropSpeedLevel = 0;
-let luckyLevel         = 0;
-let autoDropLastMs     = 0;
-
-const unlockedRecipes  = new Set();
-const kitchenStock     = {}; // type → count of stored items
-let cooksHired      = 0;
-let cookLastMerge   = 0;
-let cookAutoStock   = false;
-
-// ─── Emoji canvas cache (pre-render each emoji/size once, use drawImage) ───────
-const _emojiCache = {};
-function emojiImg(emoji, size) {
-  const key = emoji + size;
-  if (_emojiCache[key]) return _emojiCache[key];
-  const oc = document.createElement('canvas');
-  oc.width = oc.height = size * 2;
-  const ox = oc.getContext('2d');
-  ox.font = `${size}px serif`;
-  ox.textAlign = 'center'; ox.textBaseline = 'middle';
-  ox.fillText(emoji, size, size);
-  return (_emojiCache[key] = oc);
-}
-
-// ─── Physics rate limiter ──────────────────────────────────────────────────────
-const PHYSICS_MS = 33; // ~30fps physics, draw uncapped
-let _lastPhysics = 0;
-
-const soldCounts = new Array(ITEMS.length).fill(0);
-
-const items     = [];
-const orders    = [];
-const particles = [];
-const popups    = [];
-let nextId    = 0;
-let orderSeed = 0;
-
-// ─── Chain sidebar ────────────────────────────────────────────────────────────
-function buildChainList() {
-  const list = document.getElementById('chain-list');
-  list.innerHTML = '';
-  ITEMS.forEach((it, i) => {
-    const locked = i > highestMerge + 1;
-    const row = document.createElement('div');
-    row.className = 'chain-row' + (locked ? ' locked' : '');
-    row.id = `cr-${i}`;
-    row.innerHTML = `
-      <span class="chain-emoji">${locked ? '❓' : it.emoji}</span>
-      <span class="chain-name">${locked ? '???' : it.name}</span>
-      <span class="chain-sold" id="cs-${i}">${soldCounts[i] > 0 ? '×'+soldCounts[i] : ''}</span>
-    `;
-    list.appendChild(row);
-    if (i < ITEMS.length - 1) {
-      const arr = document.createElement('div');
-      arr.className = 'chain-arrow';
-      arr.textContent = '▼';
-      list.appendChild(arr);
-    }
-  });
-}
-
-function updateChainList() {
-  ITEMS.forEach((it, i) => {
-    const row   = document.getElementById(`cr-${i}`);
-    const sold  = document.getElementById(`cs-${i}`);
-    if (!row) return;
-    const locked = i > highestMerge + 1;
-    row.className = 'chain-row' + (locked ? ' locked' : '');
-    row.querySelector('.chain-emoji').textContent = locked ? '❓' : it.emoji;
-    row.querySelector('.chain-name').textContent  = locked ? '???' : it.name;
-    if (sold) sold.textContent = soldCounts[i] > 0 ? `×${soldCounts[i]}` : '';
-  });
-}
-
-// ─── Orders ───────────────────────────────────────────────────────────────────
-function maxOrderSlots() { return ordersServed >= 12 ? 2 : 1; }
-function maxOrderTier() {
-  if (highestMerge === 0) return 0;
-  // Ingredients (0-6) are orderable once discovered
-  let max = Math.min(highestMerge, 6);
-  // Assembled menu items (7+) also need a recipe card purchased
-  for (const tier of RECIPE_TIERS) {
-    if (tier <= highestMerge && unlockedRecipes.has(tier)) max = tier;
+function buildGrid() {
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell';
+    c.addEventListener('click',       () => onCell(i));
+    c.addEventListener('contextmenu', e  => { e.preventDefault(); sellCell(i); });
+    g.appendChild(c);
   }
-  return Math.min(max, ITEMS.length - 2);
 }
 
-function orderWindows(types) {
-  // Combo gets extra time on the comfortable 3-star window only
-  const star3 = STAR3_MS + (types.length > 1 ? 15000 : 0);
-  return { star3, star2: STAR2_MS, star1: STAR1_MS, total: star3 + STAR2_MS + STAR1_MS };
+function renderGrid() {
+  const cells = document.querySelectorAll('.cell');
+  const selType = sel >= 0 && board[sel] ? board[sel].type : -1;
+  cells.forEach((c, i) => {
+    c.innerHTML = '';
+    c.className = 'cell';
+    if (i === sel) c.classList.add('sel');
+    else if (selType >= 0 && board[i] && board[i].type === selType) c.classList.add('merge-target');
+
+    const item = board[i];
+    if (!item) return;
+    const d = ITEMS[item.type];
+    const pip = document.createElement('div'); pip.className = 'tier-pip'; pip.textContent = d.tier + 1;
+    const wrap = document.createElement('div'); wrap.className = 'item-inner';
+    wrap.innerHTML = `<span class="i-em">${d.emoji}</span><span class="i-nm">${d.name}</span>`;
+    c.appendChild(pip); c.appendChild(wrap);
+  });
+  renderActionBar();
 }
 
-// Predefined combo templates (types to ask for together)
-const COMBOS = [
-  [7, 8],         // Burger + Fries
-  [7, 9],         // Burger + Shake
-  [8, 9],         // Fries + Shake
-  [7, 8, 9],      // Burger + Fries + Shake (full meal)
-  [7, 4],         // Burger + Bacon
-  [7, 5],         // Burger + Cheese
-  [7, 1, 3],      // Burger + Tomato + Onion
-  [6, 4, 5],      // Patty + Bacon + Cheese
-];
+function renderActionBar() {
+  const bar = document.getElementById('action-bar');
+  bar.innerHTML = '';
+  if (sel >= 0 && board[sel]) {
+    const d = ITEMS[board[sel].type];
+    const btn = document.createElement('button');
+    btn.className = 'abtn sell';
+    btn.textContent = `Sell ${d.emoji} ${d.name}  +$${d.value}`;
+    btn.onclick = () => sellCell(sel);
+    bar.appendChild(btn);
+  }
+}
+
+// ── CELL INTERACTION ──────────────────────────────────────────────────────────
+
+function onCell(i) {
+  if (!board[i]) {
+    if (sel >= 0 && board[sel]) { board[i] = board[sel]; board[sel] = null; sel = -1; }
+    renderGrid(); return;
+  }
+  if (sel < 0) { sel = i; renderGrid(); return; }
+  if (sel === i) { sel = -1; renderGrid(); return; }
+  if (board[sel] && board[i] && board[sel].type === board[i].type) {
+    doMerge(sel, i);
+  } else {
+    sel = i; renderGrid();
+  }
+}
+
+function sellCell(i) {
+  if (!board[i]) return;
+  const d = ITEMS[board[i].type];
+  board[i] = null;
+  if (sel === i) sel = -1;
+  coins += d.value;
+  shiftSales += d.value;
+  score += d.value;
+  toast(`${d.emoji} Sold ${d.name}  +$${d.value}`);
+  renderGrid(); checkShift(); updateUI();
+}
+
+// ── MERGE ─────────────────────────────────────────────────────────────────────
+
+function doMerge(from, to) {
+  const type = board[from].type;
+  if (ITEMS[type].tier >= 3) { toast('⚠️ Already max tier!'); sel = -1; renderGrid(); return; }
+  const next = type + 1;
+  board[to] = { type: next };
+  board[from] = null;
+  sel = -1;
+  discover(next);
+  renderGrid(); updateUI();
+}
+
+// ── BASKET ────────────────────────────────────────────────────────────────────
+
+function buildGenerator() {
+  const wrap = document.getElementById('generators');
+  const g = document.createElement('div');
+  g.className = 'gen'; g.id = 'gen-basket';
+  g.innerHTML = `
+    <div class="g-em">🧺</div>
+    <div class="g-nm">Veggie Basket</div>
+    <div class="g-cd" id="bscd">Ready!</div>
+    <div class="g-bar"><div class="g-fill" id="bsfill" style="width:100%"></div></div>
+  `;
+  g.addEventListener('click', useBasket);
+  wrap.appendChild(g);
+}
+
+function useBasket() {
+  if (bsCool > 0) { toast('⏳ Cooling down…'); return; }
+  const empties = board.reduce((a, v, i) => { if (!v) a.push(i); return a; }, []);
+  if (!empties.length) { toast('😱 Board full! Merge or sell something.'); return; }
+  const type = T0[Math.floor(Math.random() * T0.length)];
+  const idx  = empties[Math.floor(Math.random() * empties.length)];
+  board[idx] = { type };
+  discover(type);
+  bsCool = BS_MAX;
+  renderGrid(); updateUI();
+}
+
+// ── DISCOVERY ─────────────────────────────────────────────────────────────────
+
+function discover(type) {
+  if (discovered.has(type)) return;
+  discovered.add(type);
+  if (ITEMS[type].tier > 0) toast(`📖 Discovered: ${ITEMS[type].emoji} ${ITEMS[type].name}!`);
+  renderRecipes();
+}
+
+// ── ORDERS ────────────────────────────────────────────────────────────────────
+
+function schedOrder(delay) {
+  clearTimeout(orderTmr);
+  orderTmr = setTimeout(spawnOrder, delay);
+}
 
 function spawnOrder() {
-  if (orders.length >= maxOrderSlots() || gameOver) return;
-
-  let wantTypes;
-  const canCombo = ordersServed >= 20 && Math.random() < 0.3 + Math.floor(ordersServed / 10) * 0.05;
-
-  if (canCombo) {
-    // Pick a combo where all types are within discovered range
-    const validCombos = COMBOS.filter(c => c.every(t => t <= maxOrderTier()));
-    if (validCombos.length > 0) {
-      wantTypes = validCombos[Math.floor(Math.random() * validCombos.length)];
-    } else {
-      wantTypes = [1 + Math.floor(Math.random() * maxOrderTier())];
-    }
-  } else {
-    wantTypes = [1 + Math.floor(Math.random() * maxOrderTier())];
-  }
+  if (orders.length >= 3) { schedOrder(4000); return; }
+  const maxTier = Math.min(3, shiftNum - 1);
+  const pool = [...discovered].filter(t => ITEMS[t].tier <= maxTier);
+  if (!pool.length) { schedOrder(5000); return; }
 
   const now = Date.now();
-  const win = orderWindows(wantTypes);
-  orders.push({
-    id:        orderSeed++,
-    wants:     wantTypes.map(t => ({ type: t, served: false })),
-    isCombo:   wantTypes.length > 1,
-    createdAt: now,
-    star3End:  now + win.star3,
-    star2End:  now + win.star3 + win.star2,
-    deadline:  now + win.total,
-    duration:  win.total,
-    customer:  CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)],
-  });
-
-  // Immediately check if any board item satisfies a want
-  checkBoardForOrders();
-}
-
-function tickOrders() {
-  const now = Date.now();
-  for (let i = orders.length - 1; i >= 0; i--) {
-    if (now >= orders[i].deadline) {
-      orders.splice(i, 1);
-      loseHeart();
-      setTimeout(spawnOrder, 6000);
-    }
-  }
-}
-
-function freshness(order) {
-  const now = Date.now();
-  if (now < order.star3End) return { stars: 3, mult: 3, color: '#44dd66' };
-  if (now < order.star2End) return { stars: 2, mult: 2, color: '#ffaa22' };
-  return                           { stars: 1, mult: 1, color: '#cc4422' };
-}
-
-// Try to serve an item of `itemType` against active orders.
-// Returns true if served, false if nothing matched.
-function tryServeType(itemType) {
-  for (const order of orders) {
-    const want = order.wants.find(w => !w.served && w.type === itemType);
-    if (!want) continue;
-    want.served = true;
-    soldCounts[itemType]++;
-    updateChainList();
-
-    if (order.wants.every(w => w.served)) {
-      completeOrder(order);
-    }
-    return true;
-  }
-  return false;
-}
-
-function completeOrder(order) {
-  const idx = orders.indexOf(order);
-  if (idx === -1) return;
-  orders.splice(idx, 1);
-
-  const f      = freshness(order);
-  const base   = order.wants.reduce((sum, w) => sum + ITEMS[w.type].value, 0);
-  const earned = Math.floor(base * f.mult * (order.isCombo ? 1.5 : 1));
-  const coinEarned = Math.max(1, Math.floor(earned / 6));
-
-  score  += earned;
-  coins  += coinEarned;
-  best    = Math.max(best, score);
-  ordersServed++;
-
-  const bonus = order.isCombo ? ' COMBO!' : '';
-  addPopup(W / 2, ARENA_TOP + 50, `🪙 +${earned}${bonus}`, 'coin', f.stars);
-
-  setTimeout(spawnOrder, 5000);
-  updateUI();
-}
-
-// Scan board items and auto-serve any that match an active order want.
-// Runs whenever a new item lands or a new order appears.
-function checkBoardForOrders() {
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (let i = items.length - 1; i >= 0; i--) {
-      const it = items[i];
-      if (it.scale < 0.85) continue;
-      if (tryServeType(it.type)) {
-        spawnParticles(it.x, it.y, ITEMS[it.type].emoji, 7);
-        removeItem(it);
-        changed = true;
-        break; // restart outer loop; orders array may have changed
-      }
-    }
-  }
-}
-
-function loseHeart() {
-  if (gameOver) return;
-  hearts = Math.max(0, hearts - 1);
-  addPopup(W / 2, H / 2 - 40, '💔 Order expired!', 'danger');
-  updateUI();
-  if (hearts <= 0) triggerGameOver();
-}
-
-// ─── Board items ──────────────────────────────────────────────────────────────
-function createItem(type, x, y, vx, vy) {
-  return {
-    id: nextId++, type, x, y,
-    vx: vx ?? (Math.random() - 0.5) * 0.8,
-    vy: vy ?? (Math.random() - 0.5) * 0.8,
-    radius: ITEMS[type].radius,
-    scale: 0.05, glowTimer: 0,
-  };
-}
-
-function removeItem(item) {
-  const i = items.indexOf(item);
-  if (i !== -1) items.splice(i, 1);
-  if (selectedItem === item) selectedItem = null;
-}
-
-function getItemAt(x, y) {
-  for (let i = items.length - 1; i >= 0; i--) {
-    const it = items[i];
-    if ((it.x - x) ** 2 + (it.y - y) ** 2 <= it.radius ** 2) return it;
-  }
-  return null;
-}
-
-function getLuckyDropType() {
-  if (highestMerge === 0 || currentLuckyPct() === 0) return 0;
-  if (Math.random() * 100 > currentLuckyPct()) return 0;
-  // Always weight heavily toward lower tiers (1/t weighting)
-  const weights = [];
-  for (let t = 1; t <= highestMerge; t++) weights.push(1 / t);
-  const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let t = 1; t <= highestMerge; t++) { r -= weights[t - 1]; if (r <= 0) return t; }
-  return 1;
-}
-
-function spawnItem(x, y, forceType) {
-  if (items.length >= maxItems) { addPopup(x, y, '🍳 Kitchen Full!'); return; }
-  const type = forceType !== undefined ? forceType : getLuckyDropType();
-  const r    = ITEMS[type].radius;
-  const item = createItem(type,
-    Math.max(r, Math.min(W - r, x)),
-    Math.max(ARENA_TOP + r, Math.min(H - r, y))
-  );
-  items.push(item);
-  if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`, 'lucky');
-  updateUI();
-  // Check if new item satisfies any order once it finishes scaling in
-  // (handled via periodic checkBoardForOrders in update loop)
-}
-
-function discardSelected() {
-  if (!selectedItem) return;
-  spawnParticles(selectedItem.x, selectedItem.y, '💨', 5);
-  removeItem(selectedItem);
-  updateUI();
-}
-
-function kitchenUnlocked() {
-  return cooksHired >= 1 && unlockedRecipes.size >= 1;
-}
-
-function storeSelected() {
-  if (!selectedItem || !kitchenUnlocked()) return;
-  const type = selectedItem.type;
-  kitchenStock[type] = (kitchenStock[type] || 0) + 1;
-  spawnParticles(selectedItem.x, selectedItem.y, ITEMS[type].emoji, 4);
-  removeItem(selectedItem);
-  selectedItem = null;
-  // Immediately try to fulfill any matching orders from the new stock
-  checkKitchenForOrders();
-  updateUI();
-}
-
-function checkKitchenForOrders() {
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const order of orders) {
-      const want = order.wants.find(w => !w.served && kitchenStock[w.type] > 0);
-      if (!want) continue;
-      kitchenStock[want.type]--;
-      if (kitchenStock[want.type] === 0) delete kitchenStock[want.type];
-      want.served = true;
-      soldCounts[want.type]++;
-      updateChainList();
-      if (order.wants.every(w => w.served)) completeOrder(order);
-      changed = true;
-      break;
-    }
-  }
-}
-
-// ─── Merge ────────────────────────────────────────────────────────────────────
-function mergeItems(a, b) {
-  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-  const nextType = a.type + 1;
-
-  // Block merge if result requires a recipe not yet purchased
-  if (nextType < ITEMS.length && RECIPE_TIERS.includes(nextType) && !unlockedRecipes.has(nextType)) {
-    addPopup(mx, my - 24, `📋 Need ${ITEMS[nextType].name} Recipe!`, 'danger');
-    return;
-  }
-
-  spawnParticles(mx, my, ITEMS[a.type].emoji, 7);
-  removeItem(a); removeItem(b);
-
-  if (nextType >= ITEMS.length) {
-    addPopup(mx, my, '🏆 MAX!');
-    updateUI();
-    return;
-  }
-
-  if (nextType > highestMerge) {
-    highestMerge = nextType;
-    updateChainList();
-  }
-
-  const newItem = createItem(nextType, mx, my, 0, 0);
-  newItem.glowTimer = 50;
-  newItem.scale = 0.9; // skip slow scale-in so it can immediately be served
-  items.push(newItem);
-
-  // Check if new item (or any existing item) satisfies an order
-  checkBoardForOrders();
-  updateUI();
-}
-
-// ─── Magnet ───────────────────────────────────────────────────────────────────
-function buyMagnet() {
-  const totalBought = magnetUsed + magnetUsesLeft;
-  if (totalBought >= 2 || gameOver) return;
-  const cost = MAGNET_COSTS[totalBought];
-  if (coins < cost) return;
-  coins -= cost;
-  magnetUsesLeft++;
-  updateUI();
-}
-
-function upgradeMagnetPull() {
-  if (magnetPullValue() >= MAGNET_PULL_MAX) return;
-  const cost = magnetPullUpgradeCost(magnetPullLevel);
-  if (coins < cost) return;
-  coins -= cost;
-  magnetPullLevel++;
-  updateUI();
-}
-
-function activateMagnet() {
-  if (magnetUsesLeft <= 0 || magnetActive || gameOver) return;
-  magnetUsesLeft--;
-  magnetUsed++;
-
-  // 5 waves of instant merges
-  for (let wave = 0; wave < 5; wave++) {
-    const usedIds = new Set();
-    const byType = {};
-    for (const it of items) {
-      if (!byType[it.type]) byType[it.type] = [];
-      byType[it.type].push(it);
-    }
-    let anyMerged = false;
-    for (const [typeStr, group] of Object.entries(byType)) {
-      if (parseInt(typeStr) >= ITEMS.length - 1) continue;
-      for (let i = 0; i + 1 < group.length; i += 2) {
-        const a = group[i], b = group[i+1];
-        if (usedIds.has(a.id)||usedIds.has(b.id)) continue;
-        if (!items.includes(a)||!items.includes(b)) continue;
-        usedIds.add(a.id); usedIds.add(b.id);
-        mergeItems(a, b);
-        anyMerged = true;
-      }
-    }
-    if (!anyMerged) break;
-  }
-
-  magnetActive = true;
-  magnetEnd    = Date.now() + 25000;
-  updateUI();
-}
-
-// ─── Upgrades ─────────────────────────────────────────────────────────────────
-function buyAutoDropUnlock() {
-  if (autoDropUnlocked || coins < AUTO_DROP_UNLOCK_COST) return;
-  coins -= AUTO_DROP_UNLOCK_COST;
-  autoDropUnlocked = true;
-  autoDropLastMs = Date.now();
-  updateUI();
-}
-
-function buyAutoDropSpeed() {
-  if (!autoDropUnlocked) return;
-  const atMax = autoDropInterval() <= AUTO_DROP_MIN_MS;
-  if (atMax) return;
-  const cost = autoDropSpeedCost(autoDropSpeedLevel);
-  if (coins < cost) return;
-  coins -= cost;
-  autoDropSpeedLevel++;
-  updateUI();
-}
-
-function buyLucky() {
-  if (currentLuckyPct() >= LUCKY_CAP_PCT) return;
-  const cost = luckyUpgradeCost(luckyLevel);
-  if (coins < cost) return;
-  coins -= cost;
-  luckyLevel++;
-  updateUI();
-}
-
-function buyRecipe(tier) {
-  const idx = RECIPE_TIERS.indexOf(tier);
-  if (idx === -1 || unlockedRecipes.has(tier)) return;
-  if (tier > highestMerge + 1) return; // must have discovered the tier below first
-  const cost = RECIPE_COSTS[idx];
-  if (coins < cost) return;
-  coins -= cost;
-  unlockedRecipes.add(tier);
-  addPopup(W / 2, ARENA_TOP + 60, `📋 ${ITEMS[tier].name} Recipe!`, 'info');
-  updateUI();
-}
-
-function hireCook() {
-  if (cooksHired >= MAX_COOKS || coins < COOK_COST) return;
-  coins -= COOK_COST;
-  cooksHired++;
-  addPopup(W / 2, ARENA_TOP + 60, `👨‍🍳 Cook hired! (${cooksHired}/${MAX_COOKS})`, 'info');
-  updateUI();
-}
-
-function buyAutoStock() {
-  if (cookAutoStock || cooksHired < 1 || !kitchenUnlocked() || coins < COOK_AUTO_STOCK_COST) return;
-  coins -= COOK_AUTO_STOCK_COST;
-  cookAutoStock = true;
-  addPopup(W / 2, ARENA_TOP + 60, '📦 Cooks now stock the kitchen!', 'info');
-  updateUI();
-}
-
-function buyExpand() {
-  if (expandLevel >= EXPAND_COSTS.length || coins < EXPAND_COSTS[expandLevel]) return;
-  coins -= EXPAND_COSTS[expandLevel];
-  maxItems += 4;
-  expandLevel++;
-  updateUI();
-}
-
-function buyClear() {
-  if (coins < 50) return;
-  coins -= 50;
-  const wanted   = new Set(orders.flatMap(o => o.wants.filter(w => !w.served).map(w => w.type)));
-  const toRemove = items.filter(it => !wanted.has(it.type));
-  toRemove.forEach(it => { spawnParticles(it.x, it.y, '💨', 4); removeItem(it); });
-  addPopup(W / 2, H / 2, `Cleared ${toRemove.length} items!`);
-  updateUI();
-}
-
-// ─── Game over / restart ─────────────────────────────────────────────────────
-function triggerGameOver() {
-  gameOver = true;
-  best = Math.max(best, score);
-  updateUI();
-}
-
-function restartGame() {
-  score = 0; coins = 0; hearts = 3; ordersServed = 0;
-  maxItems = 12; expandLevel = 0; highestMerge = 0;
-  magnetUsesLeft = 0; magnetUsed = 0; magnetPullLevel = 0; magnetActive = false; magnetEnd = 0;
-  autoDropUnlocked = false; autoDropSpeedLevel = 0; luckyLevel = 0; autoDropLastMs = 0;
-  unlockedRecipes.clear(); cooksHired = 0; cookLastMerge = 0; cookAutoStock = false;
-  Object.keys(kitchenStock).forEach(k => delete kitchenStock[k]);
-  soldCounts.fill(0);
-  selectedItem = null; gameOver = false;
-  items.length = 0; orders.length = 0; particles.length = 0; popups.length = 0;
-  buildChainList();
-  spawnOrder();
-  updateUI();
-}
-
-// ─── Particles / popups ───────────────────────────────────────────────────────
-function spawnParticles(x, y, emoji, count = 6) {
-  if (particles.length > 40) return; // cap total particle count
+  const count = shiftNum >= 3 && Math.random() < 0.35 ? 2 : 1;
+  const wants = [], used = new Set();
   for (let i = 0; i < count; i++) {
-    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.4;
-    const spd   = 1.8 + Math.random() * 2.5;
-    particles.push({ x, y, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd,
-                     life: 1, emoji, size: 12 + Math.random()*8 });
+    const avail = pool.filter(t => !used.has(t));
+    if (!avail.length) break;
+    const t = avail[Math.floor(Math.random() * avail.length)];
+    used.add(t); wants.push({ type: t, served: false });
   }
+  orders.push({
+    id: oid++, wants,
+    customer: CUSTS[Math.floor(Math.random() * CUSTS.length)],
+    createdAt: now,
+    star3End: now + S3, star2End: now + S3 + S2, deadline: now + S3 + S2 + S1,
+    expired: false,
+  });
+  renderOrders();
+  schedOrder(8000 + Math.random() * 5000);
 }
 
-// style: 'coin' | 'lucky' | 'danger' | 'info'
-function addPopup(x, y, text, style = 'info', stars = 0) {
-  popups.push({ x, y, text, style, stars, life: 1, vy: style === 'coin' ? -1.5 : -1.0 });
+function starsFor(o) {
+  const n = Date.now();
+  return n < o.star3End ? 3 : n < o.star2End ? 2 : n < o.deadline ? 1 : 0;
 }
+function timerPct(o) { return Math.max(0, (o.deadline - Date.now()) / (o.deadline - o.createdAt)); }
+function timerClr(s) { return s===3?'#44cc44':s===2?'#ccaa00':s===1?'#cc4400':'#660000'; }
 
-// ─── UI ───────────────────────────────────────────────────────────────────────
-function updateUI() {
-  document.getElementById('hearts-row').textContent =
-    '❤️'.repeat(hearts) + '🖤'.repeat(Math.max(0, maxHearts - hearts));
-  document.getElementById('score-val').textContent  = score.toLocaleString();
-  document.getElementById('best-val').textContent   = `Best: ${best.toLocaleString()}`;
-  document.getElementById('coins-val').textContent  = `🪙 ${coins} coins`;
-  document.getElementById('day-val').textContent    = `Day ${Math.floor(ordersServed / 5) + 1}`;
-  document.getElementById('served-val').textContent = `${ordersServed} orders served`;
-
-  const pct = items.length / maxItems;
-  document.getElementById('cap-label').textContent = `${items.length} / ${maxItems}`;
-  document.getElementById('cap-pct').textContent   = `${Math.round(pct * 100)}%`;
-  document.getElementById('cap-bar').style.width   = `${Math.min(100, pct * 100)}%`;
-  document.getElementById('cap-bar').style.background =
-    pct >= 0.9 ? '#ff3300' : pct >= 0.7 ? '#ff8800' : '#44cc66';
-
-  const eb = document.getElementById('btn-expand'), ec = document.getElementById('expand-cost');
-  if (expandLevel >= EXPAND_COSTS.length) { eb.disabled = true; ec.textContent = 'Max!'; }
-  else { eb.disabled = coins < EXPAND_COSTS[expandLevel]; ec.textContent = `🪙 ${EXPAND_COSTS[expandLevel]}`; }
-
-  // Auto drop — unlock button
-  const adUnlockBtn  = document.getElementById('btn-autodrop-unlock');
-  adUnlockBtn.disabled = autoDropUnlocked || coins < AUTO_DROP_UNLOCK_COST;
-  document.getElementById('autodrop-unlock-label').textContent = autoDropUnlocked ? '✔ Unlocked' : 'Unlock Auto Drop';
-  document.getElementById('autodrop-unlock-cost').textContent  = autoDropUnlocked ? '' : `🪙 ${AUTO_DROP_UNLOCK_COST}`;
-
-  // Auto drop — speed button
-  const atSpeedMax = autoDropInterval() <= AUTO_DROP_MIN_MS;
-  const speedCost  = autoDropSpeedCost(autoDropSpeedLevel);
-  const adSpeedBtn = document.getElementById('btn-autodrop-speed');
-  adSpeedBtn.disabled = !autoDropUnlocked || atSpeedMax || coins < speedCost;
-  document.getElementById('autodrop-speed-label').textContent =
-    atSpeedMax ? '⚡ Max Speed!' : `⚡ +0.5s faster (Lv ${autoDropSpeedLevel})`;
-  document.getElementById('autodrop-speed-cost').textContent =
-    atSpeedMax ? '' : `🪙 ${speedCost}`;
-
-  document.getElementById('autodrop-info').textContent = autoDropUnlocked
-    ? `Every ${(autoDropInterval()/1000).toFixed(1)}s · Speed Lv ${autoDropSpeedLevel}`
-    : 'Off';
-
-  // Lucky upgrades
-  const luckyAtMax  = currentLuckyPct() >= LUCKY_CAP_PCT;
-  const luckyCost   = luckyUpgradeCost(luckyLevel);
-  const luckyBtn    = document.getElementById('btn-lucky');
-  luckyBtn.disabled = luckyAtMax || coins < luckyCost;
-  document.getElementById('lucky-label').textContent =
-    luckyAtMax ? '🍀 Max Lucky!' : `🍀 +${LUCKY_STEP_PCT}% Lucky (Lv ${luckyLevel})`;
-  document.getElementById('lucky-cost').textContent  = luckyAtMax ? '' : `🪙 ${luckyCost}`;
-  document.getElementById('lucky-info').textContent  = `🍀 Lucky drop: ${currentLuckyPct()}%`;
-
-  // Recipes panel
-  const recipesList = document.getElementById('recipes-list');
-  recipesList.innerHTML = '';
-  let anyRecipeVisible = false;
-  for (let i = 0; i < RECIPE_TIERS.length; i++) {
-    const tier = RECIPE_TIERS[i];
-    const cost = RECIPE_COSTS[i];
-    if (tier > highestMerge + 1) continue; // show one step ahead so you can buy before merging
-    anyRecipeVisible = true;
-    const owned = unlockedRecipes.has(tier);
-    const btn = document.createElement('button');
-    btn.className = 'upg-btn';
-    btn.style.marginBottom = '4px';
-    btn.disabled = owned || coins < cost;
-    btn.onclick = () => buyRecipe(tier);
-    btn.innerHTML = owned
-      ? `<span>✔ ${ITEMS[tier].emoji} ${ITEMS[tier].name}</span><span class="cost" style="color:#44aa44">Unlocked</span>`
-      : `<span>${ITEMS[tier].emoji} ${ITEMS[tier].name} Recipe</span><span class="cost">🪙 ${cost}</span>`;
-    recipesList.appendChild(btn);
-  }
-  document.getElementById('recipes-hint').style.display = anyRecipeVisible ? 'none' : '';
-
-  // Staff panel
-  const maxCooksReached = cooksHired >= MAX_COOKS;
-  const cookBtn = document.getElementById('btn-cook');
-  cookBtn.disabled = maxCooksReached || coins < COOK_COST;
-  document.getElementById('cook-label').textContent = maxCooksReached ? 'Kitchen Full' : `Hire Line Cook (${cooksHired}/${MAX_COOKS})`;
-  document.getElementById('cook-cost').textContent  = maxCooksReached ? '' : `🪙 ${COOK_COST}`;
-  document.getElementById('cook-info').textContent  = cooksHired === 0
-    ? 'No cooks hired'
-    : `${cooksHired} cook${cooksHired > 1 ? 's' : ''} · merges every ${Math.floor(COOK_INTERVAL / cooksHired / 1000)}s`;
-  document.getElementById('cook-desc').textContent = maxCooksReached
-    ? 'Max staff reached'
-    : `Auto-merges highest-value pair every ${Math.floor(COOK_INTERVAL / Math.max(1, cooksHired) / 1000)}s`;
-
-  // Auto-stock button
-  const asBtn = document.getElementById('btn-autostock');
-  asBtn.disabled = cookAutoStock || cooksHired < 1 || !kitchenUnlocked() || coins < COOK_AUTO_STOCK_COST;
-  document.getElementById('autostock-label').textContent = cookAutoStock ? '✔ Auto-Stock Active' : '📦 Enable Kitchen Auto-Stock';
-  document.getElementById('autostock-cost').textContent  = cookAutoStock ? '' : `🪙 ${COOK_AUTO_STOCK_COST}`;
-
-  // Kitchen panel — unlocks after 1 cook + 1 recipe
-  const kPanel = document.getElementById('panel-kitchen');
-  const kOpen  = kitchenUnlocked();
-  kPanel.style.display = kOpen ? '' : 'none';
-  if (kOpen) {
-    // Stock chips
-    const grid = document.getElementById('kitchen-stock');
-    grid.innerHTML = '';
-    const types = Object.keys(kitchenStock).map(Number).filter(t => kitchenStock[t] > 0);
-    if (types.length === 0) {
-      grid.innerHTML = '<span style="font-size:0.72rem;color:#443322">Empty — store items from the board</span>';
-    } else {
-      types.forEach(t => {
-        const chip = document.createElement('div');
-        chip.className = 'k-chip';
-        chip.innerHTML = `${ITEMS[t].emoji}<span>×${kitchenStock[t]}</span>`;
-        grid.appendChild(chip);
-      });
-    }
-    // Store button
-    const storeBtn = document.getElementById('btn-store');
-    storeBtn.disabled = !selectedItem;
-    document.getElementById('store-label').textContent = selectedItem
-      ? `📦 Store ${ITEMS[selectedItem.type].name}`
-      : '📦 Store Selected Item';
-    document.getElementById('store-info').textContent = selectedItem ? '' : 'select item first';
-    document.getElementById('kitchen-hint').style.display = types.length > 0 ? 'none' : '';
-  }
-
-  // Magnet pull upgrade
-  const pullAtMax  = magnetPullValue() >= MAGNET_PULL_MAX;
-  const pullCost   = magnetPullUpgradeCost(magnetPullLevel);
-  const upgBtn     = document.getElementById('btn-magnet-upg');
-  upgBtn.disabled  = pullAtMax || coins < pullCost;
-  document.getElementById('magnet-pull-val').textContent  = magnetPullValue().toFixed(2);
-  document.getElementById('magnet-upg-label').textContent = pullAtMax ? '✔ Max Pull' : `↑ Upgrade Pull +0.05 (${magnetPullValue().toFixed(2)}→${Math.min(MAGNET_PULL_MAX, magnetPullValue()+MAGNET_PULL_STEP).toFixed(2)})`;
-  document.getElementById('magnet-upg-cost').textContent  = pullAtMax ? '' : `🪙 ${pullCost}`;
-
-  // Magnet uses
-  const totalBought = magnetUsed + magnetUsesLeft;
-  const nextCost    = totalBought < MAGNET_COSTS.length ? MAGNET_COSTS[totalBought] : null;
-  const buyBtn      = document.getElementById('btn-magnet-buy');
-  buyBtn.disabled   = totalBought >= 2 || !nextCost || coins < nextCost || gameOver;
-  document.getElementById('magnet-buy-label').textContent = totalBought >= 2 ? 'Max purchased' : `Buy Use #${totalBought + 1}`;
-  document.getElementById('magnet-buy-cost').textContent  = nextCost ? `🪙 ${nextCost}` : '';
-  document.getElementById('magnet-uses').textContent      = magnetUsesLeft;
-  const actBtn = document.getElementById('btn-magnet');
-  actBtn.disabled = magnetUsesLeft <= 0 || magnetActive || gameOver;
-  document.getElementById('magnet-cd').textContent = magnetActive
-    ? `Active: ${Math.ceil((magnetEnd - Date.now())/1000)}s`
-    : magnetUsesLeft > 0 ? 'Ready!' : 'No uses';
-
-  document.getElementById('btn-clear').disabled = coins < 50;
-}
-
-
-// ─── Input ────────────────────────────────────────────────────────────────────
-canvas.addEventListener('click', e => {
-  const rect = canvas.getBoundingClientRect();
-  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-
-  if (gameOver) {
-    const bx = W/2 - 75, by = H/2 + 50;
-    if (mx >= bx && mx <= bx+150 && my >= by && my <= by+44) restartGame();
+function renderOrders() {
+  const list = document.getElementById('orders-list');
+  if (!orders.length) {
+    list.innerHTML = '<div style="color:#664422;font-size:0.74rem;text-align:center;padding:8px 0">No orders yet…</div>';
     return;
   }
+  list.innerHTML = '';
+  for (const o of orders) {
+    const stars = starsFor(o);
+    const pct   = timerPct(o);
+    const secs  = Math.max(0, Math.ceil((o.deadline - Date.now()) / 1000));
+    const card  = document.createElement('div');
+    card.className = 'order-card' + (o.expired ? ' expired' : '');
 
-  if (selectedItem && mx >= TRASH_X && my >= TRASH_Y) { discardSelected(); return; }
+    const itemsHtml = o.wants.map(w => {
+      const d = ITEMS[w.type];
+      return `<div class="oc-itm${w.served?' done':''}" title="${d.name}">${d.emoji}</div>`;
+    }).join('');
 
-  const hit = getItemAt(mx, my);
-  if (hit && hit.scale >= 0.85) {
-    // Force-merge: if an item is already selected and we click a different item of same type → merge
-    if (selectedItem && hit !== selectedItem && hit.type === selectedItem.type) {
-      const sx = selectedItem, sh = hit;
-      selectedItem = null;
-      mergeItems(sx, sh);
-      updateUI();
-      return;
-    }
-    // Check if it satisfies any active order want
-    if (!selectedItem && orders.some(o => o.wants.some(w => !w.served && w.type === hit.type))) {
-      spawnParticles(hit.x, hit.y, ITEMS[hit.type].emoji, 9);
-      removeItem(hit);
-      tryServeType(hit.type);
-      return;
-    }
-    selectedItem = (hit === selectedItem) ? null : hit;
-    updateUI();
-    return;
+    card.innerHTML = `
+      <div class="oc-top">
+        <span class="oc-cust">${o.customer}</span>
+        <div class="oc-items">${itemsHtml}</div>
+        <span class="oc-stars">${'⭐'.repeat(stars)}</span>
+      </div>
+      <div class="oc-secs">${o.expired ? 'Expired' : secs + 's left'}</div>
+      <div class="oc-bar" style="width:${(pct*100).toFixed(1)}%;background:${timerClr(stars)}"></div>
+    `;
+    if (!o.expired) card.addEventListener('click', () => tryServe(o));
+    list.appendChild(card);
   }
+}
 
-  selectedItem = null;
+function tryServe(o) {
+  for (const w of o.wants) {
+    if (w.served) continue;
+    const ci = board.findIndex(b => b && b.type === w.type);
+    if (ci >= 0) {
+      board[ci] = null;
+      if (sel === ci) sel = -1;
+      w.served = true;
+      renderGrid();
+      if (o.wants.every(x => x.served)) { completeOrder(o); return; }
+      renderOrders(); return;
+    }
+  }
+  toast('❌ No matching item on board!');
+}
+
+function completeOrder(o) {
+  const stars = starsFor(o);
+  const bonus = [0, 3, 8, 15][stars];
+  coins += bonus;
+  shiftSales += 10; score += 10 + bonus;
+  orders = orders.filter(x => x.id !== o.id);
+  toast(`${'⭐'.repeat(stars) || '💨'} Order complete!  +$${bonus} bonus`);
+  checkShift(); renderOrders(); updateUI();
+  schedOrder(3000);
+}
+
+// ── STAFF ─────────────────────────────────────────────────────────────────────
+
+const cookCost    = () => Math.floor(100 * Math.pow(1.5, cooks));
+const cashierCost = () => Math.floor(150 * Math.pow(1.5, cashiers));
+
+function hireStaff(type) {
+  if (type === 'cook') {
+    const c = cookCost(); if (coins < c) { toast('💸 Not enough coins!'); return; }
+    coins -= c; cooks++; toast('👨‍🍳 Line Cook hired!');
+  } else {
+    const c = cashierCost(); if (coins < c) { toast('💸 Not enough coins!'); return; }
+    coins -= c; cashiers++; toast('💁 Cashier hired!');
+  }
   updateUI();
-  if (my > ARENA_TOP) spawnItem(mx, my);
-});
+}
 
-// ─── Update loop ──────────────────────────────────────────────────────────────
-let lastBoardCheck = 0;
-
-function update() {
-  if (gameOver) return;
-
-  if (magnetActive && Date.now() > magnetEnd) { magnetActive = false; updateUI(); }
-  tickOrders();
-
-  // Periodic auto-check: serve any board item that matches an order
-  if (Date.now() - lastBoardCheck > 2000) {
-    lastBoardCheck = Date.now();
-    checkBoardForOrders();
-  }
-
-  // Auto-dropper
-  if (autoDropUnlocked && items.length < maxItems) {
-    if (Date.now() - autoDropLastMs >= autoDropInterval()) {
-      autoDropLastMs = Date.now();
-      const type = getLuckyDropType();
-      const r    = ITEMS[type].radius;
-      const x    = r + Math.random() * (W - r * 2);
-      const y    = ARENA_TOP + r + 10 + Math.random() * 60;
-      const it   = createItem(type, x, y);
-      items.push(it);
-      if (type > 0) addPopup(x, y - r - 8, `🍀 ${ITEMS[type].emoji}`, 'lucky');
-      updateUI();
-      checkBoardForOrders();
+function doCookTick(dt) {
+  if (!cooks) return;
+  cookTimer += dt * cooks;
+  if (cookTimer < COOK_MS) return;
+  cookTimer %= COOK_MS;
+  const groups = {};
+  board.forEach((item, i) => { if (item) { (groups[item.type] = groups[item.type] || []).push(i); } });
+  for (const [t, idxs] of Object.entries(groups)) {
+    if (idxs.length >= 2 && ITEMS[+t].tier < 3) {
+      doMerge(idxs[0], idxs[1]);
+      toast('👨‍🍳 Cook merged items!');
+      return;
     }
-  }
-
-  // Line cooks: each cook contributes to a shared interval, auto-merging one pair
-  if (cooksHired > 0) {
-    const interval = Math.floor(COOK_INTERVAL / cooksHired);
-    if (Date.now() - cookLastMerge >= interval) {
-      cookLastMerge = Date.now();
-      // Find the highest-value matching pair to merge
-      let best = null;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].scale < 0.85) continue;
-        for (let j = i + 1; j < items.length; j++) {
-          if (items[j].scale < 0.85) continue;
-          if (items[i].type === items[j].type) {
-            if (!best || items[i].type > best[0].type) best = [items[i], items[j]];
-            break;
-          }
-        }
-      }
-      if (best) {
-        const mx = (best[0].x + best[1].x) / 2, my = (best[0].y + best[1].y) / 2;
-        addPopup(mx, my - 20, '👨‍🍳', 'info');
-        mergeItems(best[0], best[1]);
-      }
-
-      // Auto-stock: grab a board item needed by an active order and send it to kitchen
-      if (cookAutoStock && kitchenUnlocked()) {
-        const wantedTypes = new Set(orders.flatMap(o => o.wants.filter(w => !w.served).map(w => w.type)));
-        const candidate   = items.find(it => it.scale >= 0.85 && wantedTypes.has(it.type));
-        if (candidate) {
-          kitchenStock[candidate.type] = (kitchenStock[candidate.type] || 0) + 1;
-          addPopup(candidate.x, candidate.y - 20, '📦', 'info');
-          removeItem(candidate);
-          checkKitchenForOrders();
-          updateUI();
-        }
-      }
-    }
-  }
-
-  const pull = magnetActive ? magnetPullValue() : 0.025;
-  const rng  = magnetActive ? W : 200;
-
-  for (const it of items) {
-    if (it.scale < 1) it.scale = Math.min(1, it.scale + 0.07);
-    if (it.glowTimer > 0) it.glowTimer--;
-    if (Math.random() < 0.025) {
-      it.vx += (Math.random() - 0.5) * 0.18;
-      it.vy += (Math.random() - 0.5) * 0.18;
-    }
-    for (const other of items) {
-      if (other === it || other.type !== it.type) continue;
-      const dx = other.x - it.x, dy = other.y - it.y;
-      const d  = Math.sqrt(dx*dx + dy*dy);
-      if (d > 0 && d < rng) { it.vx += dx*pull/d; it.vy += dy*pull/d; }
-    }
-    it.vx *= 0.97; it.vy *= 0.97;
-    const spd = Math.sqrt(it.vx**2 + it.vy**2);
-    if (spd > 1.8) { it.vx = it.vx/spd*1.8; it.vy = it.vy/spd*1.8; }
-    it.x += it.vx; it.y += it.vy;
-    if (it.x - it.radius < 0)         { it.x = it.radius;          it.vx =  Math.abs(it.vx); }
-    if (it.x + it.radius > W)         { it.x = W - it.radius;      it.vx = -Math.abs(it.vx); }
-    if (it.y - it.radius < ARENA_TOP) { it.y = ARENA_TOP+it.radius; it.vy = Math.abs(it.vy); }
-    if (it.y + it.radius > H)         { it.y = H - it.radius;      it.vy = -Math.abs(it.vy); }
-  }
-
-  // Separation (different-type only)
-  for (let i = 0; i < items.length; i++) {
-    for (let j = i+1; j < items.length; j++) {
-      const a = items[i], b = items[j];
-      if (a.type === b.type && a.scale >= 0.85 && b.scale >= 0.85) continue;
-      const dx = b.x-a.x, dy = b.y-a.y;
-      const d  = Math.sqrt(dx*dx+dy*dy)||0.01;
-      const mn = a.radius+b.radius;
-      if (d < mn) {
-        const push = (mn-d)/2, nx = dx/d, ny = dy/d;
-        a.x -= nx*push; a.y -= ny*push; b.x += nx*push; b.y += ny*push;
-        const rv = (b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
-        if (rv<0) { a.vx-=rv*nx*0.3; a.vy-=rv*ny*0.3; b.vx+=rv*nx*0.3; b.vy+=rv*ny*0.3; }
-      }
-    }
-  }
-
-  // Merge detection
-  const merged = new Set();
-  for (let i = 0; i < items.length; i++) {
-    if (merged.has(items[i].id)) continue;
-    for (let j = i+1; j < items.length; j++) {
-      if (merged.has(items[j].id)) continue;
-      const a = items[i], b = items[j];
-      if (a.type !== b.type || a.scale < 0.85 || b.scale < 0.85) continue;
-      const dx = b.x-a.x, dy = b.y-a.y;
-      if (dx*dx+dy*dy <= (a.radius+b.radius+4)**2) {
-        merged.add(a.id); merged.add(b.id); mergeItems(a,b); break;
-      }
-    }
-  }
-
-  for (let i = particles.length-1; i >= 0; i--) {
-    const p = particles[i];
-    p.x+=p.vx; p.y+=p.vy; p.vx*=0.91; p.vy*=0.91; p.life-=0.035;
-    if (p.life <= 0) particles.splice(i,1);
-  }
-  for (let i = popups.length-1; i >= 0; i--) {
-    const p = popups[i]; p.y+=p.vy; p.life-=0.018;
-    if (p.life <= 0) popups.splice(i,1);
   }
 }
 
-// ─── Draw helpers ─────────────────────────────────────────────────────────────
-function rr(x,y,w,h,r) {
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+function doCashierTick(dt) {
+  if (!cashiers) return;
+  cashierTimer += dt * cashiers;
+  if (cashierTimer < CASHIER_MS) return;
+  cashierTimer %= CASHIER_MS;
+  for (const o of orders) {
+    if (o.expired) continue;
+    for (const w of o.wants) {
+      if (w.served) continue;
+      const ci = board.findIndex(b => b && b.type === w.type);
+      if (ci >= 0) {
+        board[ci] = null;
+        if (sel === ci) sel = -1;
+        w.served = true;
+        renderGrid();
+        if (o.wants.every(x => x.served)) { completeOrder(o); toast('💁 Cashier served!'); return; }
+        renderOrders(); return;
+      }
+    }
+  }
 }
 
-// ─── Draw orders strip ────────────────────────────────────────────────────────
-function drawOrders() {
+// ── SHIFT ─────────────────────────────────────────────────────────────────────
+
+function checkShift() {
+  if (shiftSales >= shiftGoal) {
+    shiftNum++;
+    shiftGoal = Math.floor(50 * Math.pow(1.6, shiftNum - 1));
+    shiftSales = 0;
+    toast(`🎉 Shift ${shiftNum} started!  Goal: $${shiftGoal}`);
+    updateUI();
+  }
+}
+
+// ── RECIPES ───────────────────────────────────────────────────────────────────
+
+function renderRecipes() {
+  const list = document.getElementById('recipe-list');
+  list.innerHTML = '';
+  for (let f = 0; f < 4; f++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'fam-label';
+    lbl.textContent = `${FAMILIES[f].emoji} ${FAMILIES[f].name}`;
+    list.appendChild(lbl);
+    for (let t = 0; t < 4; t++) {
+      const type  = f * 4 + t;
+      const d     = ITEMS[type];
+      const known = discovered.has(type);
+      const row   = document.createElement('div');
+      row.className = 'r-row' + (known ? '' : ' unknown');
+      row.innerHTML = `
+        <span class="r-emoji">${d.emoji}</span>
+        <span>${known ? d.name : '???'}</span>
+        <span class="r-val">${known ? '$' + d.value : ''}</span>
+      `;
+      list.appendChild(row);
+    }
+  }
+}
+
+// ── TICK ──────────────────────────────────────────────────────────────────────
+
+function tick(ts) {
+  const dt = ts - lastTs; lastTs = ts;
+
+  if (bsCool > 0) {
+    bsCool = Math.max(0, bsCool - dt);
+    const pct = (1 - bsCool / BS_MAX) * 100;
+    document.getElementById('bsfill').style.width = pct + '%';
+    document.getElementById('bscd').textContent = bsCool > 0 ? `${(bsCool/1000).toFixed(1)}s` : 'Ready!';
+    document.getElementById('gen-basket').classList.toggle('cooling', bsCool > 0);
+  }
+
   const now = Date.now();
-  ctx.fillStyle = '#5c3010';
-  ctx.fillRect(0, 0, W, ORDER_H);
-  ctx.strokeStyle = '#ff9933'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(0,ORDER_H); ctx.lineTo(W,ORDER_H); ctx.stroke();
+  for (const o of orders) { if (!o.expired && now > o.deadline) o.expired = true; }
+  orders = orders.filter(o => !o.expired || now - o.deadline < 3000);
 
-  const slots = maxOrderSlots();
-  const slotW = W / slots;
+  doCookTick(dt);
+  doCashierTick(dt);
 
-  for (let si = 0; si < slots; si++) {
-    const sx = si * slotW + 8, sw = slotW - 16;
+  if (ts - ordersTs > 250) { renderOrders(); ordersTs = ts; }
 
-    if (si < orders.length) {
-      const o = orders[si];
-      const f = freshness(o);
-      // Fraction remaining within the CURRENT star window (bar resets at each star drop)
-      let windowEnd, windowLen;
-      if (f.stars === 3)      { windowEnd = o.star3End; windowLen = o.star3End - o.createdAt; }
-      else if (f.stars === 2) { windowEnd = o.star2End; windowLen = STAR2_MS; }
-      else                    { windowEnd = o.deadline;  windowLen = STAR1_MS; }
-      const frac   = Math.max(0, (windowEnd - now) / windowLen);
-      const urgent = f.stars === 1;
-
-      // Card background
-      ctx.fillStyle   = urgent ? 'rgba(200,30,0,0.85)' : 'rgba(255,210,140,0.82)';
-      ctx.strokeStyle = urgent ? '#ff4422' : '#ffcc66';
-      ctx.lineWidth = 1.5;
-      rr(sx, 5, sw, ORDER_H - 11, 8); ctx.fill(); ctx.stroke();
-
-      // ── Customer — halo as circle, no shadowBlur ──
-      ctx.beginPath(); ctx.arc(sx + 26, 38, 20, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,210,120,0.35)'; ctx.fill();
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.drawImage(emojiImg(o.customer, 28), sx + 26 - 28, 38 - 28, 56, 56);
-
-      // "wants" label
-      ctx.fillStyle = '#331500'; ctx.font = 'bold 8px sans-serif';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText('wants:', sx + 52, 8);
-
-      // ── Wanted items ──
-      const unserved = o.wants.filter(w => !w.served);
-      const served   = o.wants.filter(w => w.served);
-      const allWants = o.wants;
-      const itemsPerRow = allWants.length;
-      const cellW = Math.min(44, (sw - 55) / itemsPerRow);
-
-      allWants.forEach((want, wi) => {
-        const ix = sx + 52 + wi * cellW + cellW / 2;
-        const iy = 40;
-
-        // Circle bg
-        ctx.beginPath(); ctx.arc(ix, iy, 18, 0, Math.PI*2);
-        ctx.fillStyle = want.served ? '#2a8c50' : '#ffffff';
-        ctx.fill();
-        ctx.strokeStyle = want.served ? '#1a6634' : '#442200';
-        ctx.lineWidth = 2; ctx.stroke();
-
-        // Emoji
-        ctx.font = '20px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.globalAlpha = want.served ? 0.4 : 1;
-        ctx.fillText(ITEMS[want.type].emoji, ix, iy);
-        ctx.globalAlpha = 1;
-
-        // Tick / name
-        if (want.served) {
-          ctx.fillStyle = '#ffffff'; ctx.font = 'bold 14px sans-serif';
-          ctx.fillText('✓', ix, iy);
-        } else {
-          ctx.fillStyle = '#442200'; ctx.font = 'bold 7px sans-serif';
-          ctx.textBaseline = 'top';
-          ctx.fillText(ITEMS[want.type].name, ix, iy + 20);
-        }
-      });
-
-      // Freshness stars (right side)
-      const starsX = sx + sw - 5;
-      ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-      ctx.fillStyle = f.color; ctx.font = '9px sans-serif';
-      ctx.fillText('⭐'.repeat(f.stars) + '☆'.repeat(3-f.stars), starsX, 8);
-
-      // Combo badge
-      if (o.isCombo) {
-        ctx.fillStyle = '#ffcc44'; ctx.font = 'bold 8px sans-serif';
-        ctx.fillText('COMBO', starsX, 20);
-      }
-
-      // Timer bar
-      const bx = sx+5, by = ORDER_H-21, bw = sw-10, bh = 7;
-      ctx.fillStyle = '#1a0d00'; rr(bx,by,bw,bh,3); ctx.fill();
-      if (frac > 0) {
-        ctx.fillStyle = frac > 0.5 ? '#44cc44' : frac > 0.2 ? '#ffaa00' : '#ff2200';
-        rr(bx,by,bw*frac,bh,3); ctx.fill();
-      }
-      // Seconds until next star drop (or expiry on last star)
-      const sec = Math.max(0, Math.ceil((windowEnd - now) / 1000));
-      ctx.fillStyle = urgent ? '#ff4422' : '#442200';
-      ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(`${sec}s`, sx+sw/2, ORDER_H-9);
-
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.02)'; ctx.strokeStyle = '#1a0900'; ctx.lineWidth=1;
-      rr(sx,5,sw,ORDER_H-11,8); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#2a1400'; ctx.font = '10px sans-serif';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(ordersServed < 12 ? 'Serve 12 to unlock' : 'Incoming…', sx+sw/2, ORDER_H/2-4);
-    }
-  }
-
-  if (magnetActive) {
-    const rem = Math.ceil((magnetEnd-Date.now())/1000);
-    ctx.fillStyle = '#44aaff'; ctx.font = 'bold 10px sans-serif';
-    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
-    ctx.fillText(`🧲 ${rem}s`, W-8, 5);
-  }
+  requestAnimationFrame(tick);
 }
 
-// ─── Draw arena ───────────────────────────────────────────────────────────────
-function drawArena() {
-  ctx.strokeStyle = 'rgba(255,80,0,0.03)'; ctx.lineWidth = 1;
-  for (let x=0; x<W; x+=40) { ctx.beginPath(); ctx.moveTo(x,ARENA_TOP); ctx.lineTo(x,H); ctx.stroke(); }
-  for (let y=ARENA_TOP; y<H; y+=40) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+// ── UI ────────────────────────────────────────────────────────────────────────
 
-  if (magnetActive) {
-    const frac = (magnetEnd-Date.now())/30000;
-    ctx.fillStyle = `rgba(20,80,180,${0.04*frac})`;
-    ctx.fillRect(0, ARENA_TOP, W, H-ARENA_TOP);
-  }
-
-  // Trash zone
-  const lit = selectedItem !== null;
-  ctx.fillStyle   = lit ? 'rgba(255,60,0,0.22)' : 'rgba(50,12,0,0.55)';
-  ctx.strokeStyle = lit ? '#ff5500' : '#2a0e00';
-  ctx.lineWidth   = lit ? 2 : 1;
-  rr(TRASH_X, TRASH_Y, TRASH_SZ, TRASH_SZ, 8); ctx.fill(); ctx.stroke();
-  ctx.font='26px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('🗑️', TRASH_X+TRASH_SZ/2, TRASH_Y+TRASH_SZ/2);
-  if (lit) { ctx.fillStyle='#ff7755'; ctx.font='8px sans-serif'; ctx.fillText('TRASH',TRASH_X+TRASH_SZ/2,TRASH_Y+TRASH_SZ-8); }
+function updateUI() {
+  document.getElementById('coins-val').textContent = `$${coins}`;
+  document.getElementById('score-line').textContent = `Score: ${score}`;
+  document.getElementById('shift-lbl').textContent  = `Shift ${shiftNum}`;
+  document.getElementById('shift-amt').textContent  = `$${shiftSales} / $${shiftGoal}`;
+  document.getElementById('shift-bar').style.width  = Math.min(100, shiftSales / shiftGoal * 100) + '%';
+  document.getElementById('cook-ct').textContent    = `(${cooks})`;
+  document.getElementById('cashier-ct').textContent = `(${cashiers})`;
+  const cc = cookCost(), cac = cashierCost();
+  document.getElementById('cook-cost-lbl').textContent    = `$${cc}`;
+  document.getElementById('cashier-cost-lbl').textContent = `$${cac}`;
+  document.getElementById('btn-cook').disabled    = coins < cc;
+  document.getElementById('btn-cashier').disabled = coins < cac;
 }
 
-// ─── Draw items ───────────────────────────────────────────────────────────────
-function drawItems() {
-  for (const p of particles) {
-    ctx.globalAlpha = p.life * 0.9;
-    const ps = Math.round(p.size);
-    ctx.drawImage(emojiImg(p.emoji, ps), p.x - ps, p.y - ps, ps*2, ps*2);
-  }
-  ctx.globalAlpha = 1;
-
-  for (const it of items) {
-    const isSel     = it === selectedItem;
-    const wantOrder = orders.find(o => o.wants.some(w => !w.served && w.type === it.type));
-    const isWanted  = !!wantOrder;
-    const f         = isWanted ? freshness(wantOrder) : null;
-
-    ctx.save();
-    ctx.translate(it.x, it.y);
-    ctx.scale(it.scale, it.scale);
-
-    // Glow ring — drawn as extra arcs, no shadowBlur
-    const glowColor = isSel ? '#ff6600' : it.glowTimer ? '#ffdd00' : isWanted ? f.color : magnetActive ? '#4488ff' : null;
-    if (glowColor) {
-      const pulseW = isSel ? 2 + 2*Math.sin(Date.now()/140) : it.glowTimer ? 2 : 2;
-      ctx.beginPath(); ctx.arc(0, 0, it.radius + 5, 0, Math.PI*2);
-      ctx.strokeStyle = glowColor; ctx.lineWidth = pulseW + 2; ctx.globalAlpha = 0.35; ctx.stroke();
-      ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(0, 0, it.radius + 3, 0, Math.PI*2);
-      ctx.strokeStyle = glowColor; ctx.lineWidth = pulseW; ctx.stroke();
-    }
-
-    // Circle body
-    ctx.beginPath(); ctx.arc(0, 0, it.radius, 0, Math.PI*2);
-    ctx.fillStyle = 'rgba(10,5,0,0.82)'; ctx.fill();
-    ctx.strokeStyle = glowColor || 'rgba(255,160,60,0.3)';
-    ctx.lineWidth = glowColor ? 2 : 1.5; ctx.stroke();
-
-    // Emoji — drawImage from cache (much faster than fillText)
-    const eSize = Math.round(it.radius * 1.1);
-    ctx.drawImage(emojiImg(ITEMS[it.type].emoji, eSize), -eSize, -eSize + 2, eSize*2, eSize*2);
-
-    if (isWanted && !isSel) {
-      ctx.fillStyle = f.color; ctx.font = `${it.radius*.38}px sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText('▲', 0, -it.radius*.6);
-    }
-    ctx.restore();
-  }
-
-  for (const p of popups) {
-    ctx.save();
-    ctx.globalAlpha = p.life;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-
-    if (p.style === 'coin') {
-      // Pill badge — color by star rating
-      const isCombo = p.text.includes('COMBO');
-      const bg   = p.stars === 3 ? '#1e8c3a' : p.stars === 2 ? '#c47a00' : '#8c1a00';
-      const border = p.stars === 3 ? '#55ee77' : p.stars === 2 ? '#ffcc44' : '#ff4422';
-      ctx.font = 'bold 17px sans-serif';
-      const tw = ctx.measureText(p.text).width;
-      const pw = tw + 24, ph = 26, px = p.x - pw/2, py = p.y - ph/2;
-      // Dark offset "shadow" pill (no shadowBlur)
-      rr(px+2, py+2, pw, ph, 13);
-      ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fill();
-      // Pill bg
-      rr(px, py, pw, ph, 13);
-      ctx.fillStyle = bg; ctx.fill();
-      ctx.strokeStyle = border; ctx.lineWidth = 2; ctx.stroke();
-      // Star pips above pill
-      const starStr = '★'.repeat(p.stars) + '☆'.repeat(3 - p.stars);
-      ctx.font = '9px sans-serif';
-      ctx.fillStyle = border;
-      ctx.fillText(starStr, p.x, py - 7);
-      // Text
-      ctx.font = `bold ${isCombo ? 15 : 17}px sans-serif`;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(p.text, p.x, p.y);
-
-    } else if (p.style === 'lucky') {
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillStyle = '#66ff88';
-      ctx.fillText(p.text, p.x, p.y);
-
-    } else if (p.style === 'danger') {
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillStyle = '#ff5544';
-      ctx.fillText(p.text, p.x, p.y);
-
-    } else {
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillStyle = '#ffdd44';
-      ctx.fillStyle = '#ffdd44';
-      ctx.fillText(p.text, p.x, p.y);
-    }
-
-    ctx.restore();
-  }
+function toast(msg) {
+  const wrap = document.getElementById('popups');
+  const d = document.createElement('div');
+  d.className = 'toast'; d.textContent = msg;
+  wrap.appendChild(d);
+  setTimeout(() => d.remove(), 2200);
 }
 
-// ─── Game over overlay ────────────────────────────────────────────────────────
-function drawGameOver() {
-  ctx.fillStyle='rgba(0,0,0,0.82)'; ctx.fillRect(0,0,W,H);
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.font='bold 38px sans-serif'; ctx.fillStyle='#ff4422';
-  ctx.fillText('CLOSED! 🍔', W/2, H/2-80);
-  ctx.font='20px sans-serif'; ctx.fillStyle='#ffcc44';
-  ctx.fillText(`Final Score: ${score.toLocaleString()}`, W/2, H/2-30);
-  ctx.fillStyle='#aa8833'; ctx.font='15px sans-serif';
-  ctx.fillText(`Best: ${best.toLocaleString()}`, W/2, H/2+5);
-  ctx.fillStyle='#885522';
-  ctx.fillText(`Orders served: ${ordersServed}`, W/2, H/2+28);
-  const bx=W/2-75, by=H/2+50;
-  ctx.fillStyle='#cc4400'; ctx.strokeStyle='#ff8800'; ctx.lineWidth=2;
-  rr(bx,by,150,44,8); ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#fff'; ctx.font='bold 15px sans-serif';
-  ctx.fillText('Open Again! 🔓', W/2, by+22);
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+function init() {
+  buildGrid();
+  buildGenerator();
+  T0.forEach(discover);
+  renderRecipes();
+  updateUI();
+  schedOrder(6000);
+  requestAnimationFrame(tick);
 }
 
-// ─── Main loop ────────────────────────────────────────────────────────────────
-function loop(ts) {
-  if (ts - _lastPhysics >= PHYSICS_MS) {
-    _lastPhysics = ts;
-    update();
-  }
-  ctx.clearRect(0,0,W,H);
-  drawOrders();
-  drawArena();
-  drawItems();
-  if (gameOver) drawGameOver();
-  requestAnimationFrame(loop);
-}
-
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-buildChainList();
-updateUI();
-setTimeout(spawnOrder, 12000);
-loop();
+init();
 </script>
 </body>
 </html>
