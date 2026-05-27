@@ -121,6 +121,38 @@
 
     #hint { font-size: 0.64rem; color: #664422; }
 
+    /* help modal */
+    #help-btn {
+      position: fixed; top: 14px; right: 16px;
+      background: #2a1200; border: 1px solid #8b4400; border-radius: 50%;
+      color: #ffcc44; font-size: 1rem; font-weight: bold;
+      width: 30px; height: 30px; cursor: pointer; z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s;
+    }
+    #help-btn:hover { background: #3d1a00; }
+    #help-overlay {
+      display: none; position: fixed; inset: 0;
+      background: #000000bb; z-index: 900;
+      align-items: center; justify-content: center;
+    }
+    #help-overlay.open { display: flex; }
+    #help-box {
+      background: #1a0900; border: 1.5px solid #8b4400; border-radius: 12px;
+      padding: 22px 26px; max-width: 520px; width: 90%; max-height: 80vh;
+      overflow-y: auto; position: relative;
+    }
+    #help-box h2 { color: #ffcc44; font-size: 1rem; margin-bottom: 14px; }
+    #help-box h3 { color: #ff8800; font-size: 0.78rem; margin: 12px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
+    #help-box p, #help-box li { font-size: 0.78rem; color: #cc9944; line-height: 1.6; }
+    #help-box ul { padding-left: 16px; }
+    #help-close {
+      position: absolute; top: 10px; right: 14px;
+      background: none; border: none; color: #664422;
+      font-size: 1.2rem; cursor: pointer; line-height: 1;
+    }
+    #help-close:hover { color: #ff8800; }
+
     /* RIGHT */
     #right-panel { width: 210px; display: flex; flex-direction: column; gap: 12px; padding-top: 48px; }
 
@@ -224,7 +256,58 @@
   <div id="grid"></div>
   <div id="action-bar"></div>
   <div id="generators"></div>
-  <div id="hint">Click item → click match to merge &nbsp;·&nbsp; Right-click to sell</div>
+  <div id="hint">Drag item onto a match to merge &nbsp;·&nbsp; Right-click to sell</div>
+</div>
+
+<button id="help-btn" onclick="document.getElementById('help-overlay').classList.add('open')">?</button>
+
+<div id="help-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div id="help-box">
+    <button id="help-close" onclick="document.getElementById('help-overlay').classList.remove('open')">✕</button>
+    <h2>🍔 How to Play — Hamburger Empire</h2>
+
+    <h3>🧺 Fill the Board</h3>
+    <p>Click the <strong>Veggie Basket</strong> to drop a random raw veggie onto the grid. You get <strong>30 free clicks</strong> before a short cooldown, then 15 more each refill. Spam it to stock up fast.</p>
+
+    <h3>🔀 Merge to Level Up</h3>
+    <ul>
+      <li><strong>Drag</strong> an item on top of a matching item to merge them</li>
+      <li>Lvl 1 + Lvl 1 → Lvl 2 &nbsp;·&nbsp; Lvl 2 + Lvl 2 → Lvl 3 &nbsp;·&nbsp; Lvl 3 + Lvl 3 → MAX</li>
+      <li>The corner hint on each cell shows what you'll create (e.g. +1→ 🫙)</li>
+      <li>Drag to an <strong>empty cell</strong> to just move an item</li>
+    </ul>
+
+    <h3>💵 Sell Items</h3>
+    <ul>
+      <li><strong>Right-click</strong> any item to sell it instantly for coins</li>
+      <li>Or click to select it, then hit the <strong>Sell button</strong> below the grid</li>
+      <li>Higher-level items are worth more ($2 → $5 → $12 → $30)</li>
+    </ul>
+
+    <h3>🛎️ Fill Customer Orders</h3>
+    <ul>
+      <li>Order cards appear on the right — each shows the item and level wanted</li>
+      <li><strong>Click an order card</strong> to auto-pull the matching item from your board</li>
+      <li>Serve fast for ⭐⭐⭐ star bonus coins — timer bar goes green → yellow → red</li>
+      <li>Orders expire if ignored too long</li>
+    </ul>
+
+    <h3>📊 Shift Goals</h3>
+    <p>The green progress bar tracks sales toward the shift target. Selling items <em>and</em> completing orders both count. Hit the goal to advance to the next shift with bigger rewards.</p>
+
+    <h3>👥 Staff</h3>
+    <ul>
+      <li><strong>👨‍🍳 Line Cook</strong> — auto-merges matching pairs every 7s. Buy multiples to speed it up.</li>
+      <li><strong>💁 Cashier</strong> — auto-serves orders every 4s when ingredients are on the board. The teal-highlighted order shows who they're working on.</li>
+    </ul>
+
+    <h3>💡 Tips</h3>
+    <ul>
+      <li>Keep the board stocked — more items means more merge opportunities</li>
+      <li>Hire a Cook early; they handle the busywork while you focus on orders</li>
+      <li>Watch the Recipe Book on the left to track what you've discovered</li>
+    </ul>
+  </div>
 </div>
 
 <div id="right-panel">
