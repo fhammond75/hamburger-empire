@@ -130,9 +130,18 @@
     .order-card {
       background: #1e0a00; border: 1.5px solid #6b3400;
       border-radius: 8px; padding: 8px; margin-bottom: 8px;
-      cursor: pointer; transition: border-color 0.12s;
+      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
     }
     .order-card:last-child { margin-bottom: 0; }
+    .order-card.cashier-target {
+      border-color: #44ccaa;
+      box-shadow: 0 0 10px #44ccaa33;
+    }
+    .cashier-tag {
+      display: inline-block; font-size: 0.55rem; background: #44ccaa33;
+      color: #44ccaa; border: 1px solid #44ccaa55; border-radius: 10px;
+      padding: 1px 6px; margin-bottom: 4px;
+    }
     .order-card:hover:not(.expired) { border-color: #ff8800; }
     .order-card.expired { border-color: #661111; opacity: 0.55; cursor: default; }
     .oc-top { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
@@ -242,6 +251,10 @@
       <span>💁 Cashier <small id="cashier-ct">(0)</small></span>
       <span class="s-cost" id="cashier-cost-lbl">$150</span>
     </button>
+    <div id="cashier-activity" style="display:none;padding:0 2px 4px">
+      <div class="cook-bar-wrap"><div class="cook-bar-fill" id="cashier-bar" style="background:#44ccaa"></div></div>
+      <div class="cook-status" id="cashier-status">💁 Serving…</div>
+    </div>
   </div>
 </div>
 
@@ -569,6 +582,20 @@ function starsFor(o) {
 function timerPct(o) { return Math.max(0, (o.deadline - Date.now()) / (o.deadline - o.createdAt)); }
 function timerClr(s) { return s===3?'#44cc44':s===2?'#ccaa00':s===1?'#cc4400':'#660000'; }
 
+function getCashierTargetId() {
+  if (!cashiers) return -1;
+  // prefer first order that has a matching board item right now
+  for (const o of orders) {
+    if (o.expired) continue;
+    for (const w of o.wants) {
+      if (!w.served && board.some(b => b && b.type === w.type)) return o.id;
+    }
+  }
+  // fallback: first incomplete order (cashier is working toward it)
+  const first = orders.find(o => !o.expired && o.wants.some(w => !w.served));
+  return first ? first.id : -1;
+}
+
 function renderOrders() {
   const list = document.getElementById('orders-list');
   if (!orders.length) {
@@ -576,12 +603,14 @@ function renderOrders() {
     return;
   }
   list.innerHTML = '';
+  const cashierTarget = getCashierTargetId();
   for (const o of orders) {
-    const stars = starsFor(o);
-    const pct   = timerPct(o);
-    const secs  = Math.max(0, Math.ceil((o.deadline - Date.now()) / 1000));
-    const card  = document.createElement('div');
-    card.className = 'order-card' + (o.expired ? ' expired' : '');
+    const stars    = starsFor(o);
+    const pct      = timerPct(o);
+    const secs     = Math.max(0, Math.ceil((o.deadline - Date.now()) / 1000));
+    const isCTarget = cashiers > 0 && o.id === cashierTarget && !o.expired;
+    const card     = document.createElement('div');
+    card.className = 'order-card' + (o.expired ? ' expired' : '') + (isCTarget ? ' cashier-target' : '');
 
     const itemsHtml = o.wants.map(w => {
       const d = ITEMS[w.type];
@@ -590,6 +619,7 @@ function renderOrders() {
     }).join('');
 
     card.innerHTML = `
+      ${isCTarget ? '<div class="cashier-tag">💁 Cashier working</div>' : ''}
       <div class="oc-top">
         <span class="oc-cust">${o.customer}</span>
         <div class="oc-items">${itemsHtml}</div>
@@ -773,6 +803,20 @@ function tick(ts) {
     }
   }
 
+  // cashier activity bar
+  if (cashiers > 0) {
+    const cashierPct = Math.min(100, cashierTimer / CASHIER_MS * 100);
+    const cbar    = document.getElementById('cashier-bar');
+    const cstatus = document.getElementById('cashier-status');
+    if (cbar) cbar.style.width = cashierPct + '%';
+    if (cstatus) {
+      const hasTarget = getCashierTargetId() >= 0;
+      const canServe  = orders.some(o => !o.expired && o.wants.some(w => !w.served && board.some(b => b && b.type === w.type)));
+      cstatus.textContent = canServe ? '⚡ Serving soon…' : hasTarget ? '👀 Waiting for ingredients…' : '💤 No orders';
+      cstatus.className = 'cook-status' + (canServe ? ' cook-active' : '');
+    }
+  }
+
   if (ts - ordersTs > 250) { renderOrders(); ordersTs = ts; }
 
   requestAnimationFrame(tick);
@@ -788,7 +832,8 @@ function updateUI() {
   const shiftPct = Math.min(100, shiftSales / shiftGoal * 100);
   document.getElementById('shift-bar').style.width      = shiftPct + '%';
   document.getElementById('shift-bar-label').textContent = `$${shiftSales} / $${shiftGoal}`;
-  document.getElementById('cook-activity').style.display = cooks > 0 ? 'block' : 'none';
+  document.getElementById('cook-activity').style.display     = cooks > 0     ? 'block' : 'none';
+  document.getElementById('cashier-activity').style.display = cashiers > 0  ? 'block' : 'none';
   document.getElementById('cook-ct').textContent    = `(${cooks})`;
   document.getElementById('cashier-ct').textContent = `(${cashiers})`;
   const cc = cookCost(), cac = cashierCost();
